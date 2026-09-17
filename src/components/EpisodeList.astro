@@ -1,0 +1,77 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { formatTime } from "../lib/time";
+
+interface Props {
+  episodes: CollectionEntry<"episodes">[];
+  currentId: string;
+}
+
+const { episodes, currentId } = Astro.props;
+const dateFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
+---
+
+<section aria-labelledby="episodes-heading" id="episode-list">
+  <h2 id="episodes-heading" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+    Épisodes
+  </h2>
+
+  <ol class="mt-3 flex flex-col gap-3">
+    {
+      episodes.map((episode) => {
+        const isCurrent = episode.id === currentId;
+
+        return (
+          <li
+            data-episode-id={episode.id}
+            aria-current={isCurrent ? "true" : undefined}
+            class="rounded-control border border-slate-200 p-4 aria-[current=true]:border-accent aria-[current=true]:ring-1 aria-[current=true]:ring-accent dark:border-slate-800"
+          >
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p
+                  class="episode-current-marker mb-1 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-accent"
+                  hidden={!isCurrent}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" class="h-3 w-3" fill="currentColor">
+                    <path d="M6 4l10 6-10 6V4z" />
+                  </svg>
+                  En lecture
+                </p>
+                <p class="font-medium text-slate-900 dark:text-slate-100">{episode.data.title}</p>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {dateFormatter.format(episode.data.date)} · {formatTime(episode.data.duration)}
+                </p>
+
+                {/* Rempli par le contrôleur au démarrage, à partir de localStorage (F-60, F-65 : aucun badge avant JS). */}
+                <div class="episode-badge-slot mt-2" data-episode-badge-slot></div>
+
+                {episode.data.description && (
+                  <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{episode.data.description}</p>
+                )}
+              </div>
+
+              <div class="flex shrink-0 flex-col gap-2 sm:items-end">
+                <button
+                  type="button"
+                  data-episode-id={episode.id}
+                  class="episode-play-button min-h-11 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accent-contrast hover:opacity-90"
+                >
+                  Écouter : {episode.data.title}
+                </button>
+                <button
+                  type="button"
+                  data-episode-id={episode.id}
+                  hidden
+                  class="episode-toggle-completed min-h-11 rounded-control border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Marquer comme écouté
+                </button>
+              </div>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ol>
+</section>

@@ -1,0 +1,116 @@
+---
+import { formatTime, toSpokenTime } from "../lib/time";
+import type { Chapter } from "../lib/chapters";
+
+interface Props {
+  title: string;
+  duration: number;
+  chapters: Chapter[];
+  currentChapterIndex: number;
+  audioSrc: string;
+}
+
+const { title, duration, chapters, currentChapterIndex, audioSrc } = Astro.props;
+const currentChapter = currentChapterIndex >= 0 ? chapters[currentChapterIndex] : undefined;
+const hasPrevChapter = currentChapterIndex > 0;
+const hasNextChapter = chapters.length > 0 && currentChapterIndex < chapters.length - 1;
+---
+
+<section aria-label="Lecteur" class="rounded-control border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+  <audio id="audio" preload="metadata" src={audioSrc}></audio>
+
+  <p id="player-episode-title" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+    {title}
+  </p>
+
+  <p id="player-chapter-title" hidden={!currentChapter} class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+    Chapitre : {currentChapter?.title}
+  </p>
+
+  <p id="player-error" role="alert" hidden class="mt-3 rounded-control bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+    La lecture a échoué.
+    <button type="button" id="btn-retry" class="ml-2 min-h-11 rounded-control border border-red-800 px-3 py-1 font-medium dark:border-red-200">
+      Réessayer
+    </button>
+  </p>
+
+  <div class="mt-4 flex items-center justify-center gap-4">
+    <button
+      type="button"
+      id="btn-back-15"
+      aria-label="Reculer de 15 secondes"
+      class="flex min-h-11 min-w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 12a8 8 0 1 0 3-6.2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4 4v4h4" stroke-linecap="round" stroke-linejoin="round" />
+        <text x="12" y="16" font-size="7" fill="currentColor" stroke="none" text-anchor="middle">15</text>
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      id="btn-play-pause"
+      class="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-accent text-accent-contrast hover:opacity-90"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor">
+        <path id="btn-play-pause-icon" d="M8 5v14l11-7z" />
+      </svg>
+      <span id="btn-play-pause-label" class="sr-only">Lecture</span>
+    </button>
+
+    <button
+      type="button"
+      id="btn-forward-15"
+      aria-label="Avancer de 15 secondes"
+      class="flex min-h-11 min-w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 12a8 8 0 1 1-3-6.2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20 4v4h-4" stroke-linecap="round" stroke-linejoin="round" />
+        <text x="12" y="16" font-size="7" fill="currentColor" stroke="none" text-anchor="middle">15</text>
+      </svg>
+    </button>
+  </div>
+
+  <div class="mt-4">
+    <label for="seek" class="sr-only">Position de lecture</label>
+    <input
+      type="range"
+      id="seek"
+      min="0"
+      max={duration}
+      step="1"
+      value="0"
+      class="w-full accent-accent"
+      aria-valuetext={`${toSpokenTime(0)} sur ${toSpokenTime(duration)}`}
+    />
+    <p class="mt-1 flex justify-between tabular-nums text-sm text-slate-500 dark:text-slate-400">
+      <span id="time-current">{formatTime(0)}</span>
+      <span id="time-duration">{formatTime(duration)}</span>
+    </p>
+  </div>
+
+  <div id="chapter-nav" hidden={chapters.length === 0} class="mt-4 flex justify-between">
+    <button
+      type="button"
+      id="btn-prev-chapter"
+      disabled={!hasPrevChapter}
+      class="min-h-11 rounded-control px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40 dark:text-slate-200 dark:hover:bg-slate-800"
+    >
+      Chapitre précédent
+    </button>
+    <button
+      type="button"
+      id="btn-next-chapter"
+      disabled={!hasNextChapter}
+      class="min-h-11 rounded-control px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40 dark:text-slate-200 dark:hover:bg-slate-800"
+    >
+      Chapitre suivant
+    </button>
+  </div>
+</section>
+
+<script>
+  import "../scripts/player";
+</script>

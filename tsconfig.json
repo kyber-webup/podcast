@@ -1,5 +1,8 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  // worker/ a son propre tsconfig.json : les types globaux du runtime Workers
+  // (Request, Response, ReadableStream, HTMLRewriter...) entrent en collision
+  // avec les types DOM utilisés par le code du navigateur (src/).
+  "exclude": ["dist", "worker", "worker-configuration.d.ts"]
 }

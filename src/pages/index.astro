@@ -1,5 +1,34 @@
 ---
+import { getCollection } from "astro:content";
 import "../styles/global.css";
+import Player from "../components/Player.astro";
+import ChapterList from "../components/ChapterList.astro";
+import EpisodeList from "../components/EpisodeList.astro";
+import { getCurrentChapterIndex } from "../lib/chapters";
+
+const episodes = (await getCollection("episodes")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+const current = episodes[0];
+
+// En dev, PUBLIC_AUDIO_BASE peut pointer vers public/dev-audio/ (voir README).
+// En production, la route /audio/<fichier> est servie par le Worker (étape 9).
+const audioBase = import.meta.env.PUBLIC_AUDIO_BASE ?? "/audio";
+
+// État initial avant JS : aucune lecture n'a eu lieu (F-20), le contrôleur applique
+// la position sauvegardée dès son démarrage (voir src/scripts/player.ts, étape 5).
+const currentChapterIndex = getCurrentChapterIndex(current.data.chapters, 0);
+
+// §5.3 : les métadonnées de tous les épisodes sont sérialisées ici, lues par le
+// contrôleur au démarrage — pas de requête réseau supplémentaire pour ces données.
+const episodesData = episodes.map((episode) => ({
+  id: episode.id,
+  title: episode.data.title,
+  date: episode.data.date.toISOString(),
+  duration: episode.data.duration,
+  audioSrc: `${audioBase}/${episode.data.file}`,
+  chapters: episode.data.chapters,
+}));
 ---
 
 <html lang="fr">
@@ -9,10 +38,33 @@ import "../styles/global.css";
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>DevNote</title>
+		<title>{current.data.title} — DevNote</title>
 	</head>
-	<body>
-		<h1>DevNote</h1>
-		<p>Page en construction.</p>
+	<body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+		<a href="#episode-list" class="skip-link">Aller à la liste des épisodes</a>
+
+		<header class="border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-6">
+			<h1 class="text-xl font-bold">DevNote</h1>
+		</header>
+
+		<main class="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+			<Player
+				title={current.data.title}
+				duration={current.data.duration}
+				chapters={current.data.chapters}
+				currentChapterIndex={currentChapterIndex}
+				audioSrc={`${audioBase}/${current.data.file}`}
+			/>
+
+			<ChapterList chapters={current.data.chapters} currentIndex={currentChapterIndex} />
+
+			<EpisodeList episodes={episodes} currentId={current.id} />
+		</main>
+
+		<script type="application/json" id="episodes-data" is:inline set:html={JSON.stringify(episodesData)} />
+
+		<footer class="border-t border-slate-200 px-4 py-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:px-6">
+			<p>DevNote — podcast interne de l'agence.</p>
+		</footer>
 	</body>
 </html>

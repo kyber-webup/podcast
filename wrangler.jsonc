@@ -1,7 +1,38 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "devnote",
   "compatibility_date": "2026-09-16",
+  "main": "worker/index.ts",
+  // NF-51 : aucune autre voie d'accès que le domaine personnalisé.
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Le Worker n'intercepte que /audio/* ; tout le reste est servi directement
+    // par les static assets (A-07), sans passer par fetch().
+    "run_worker_first": ["/audio/*"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "AUDIO",
+      "bucket_name": "podcast-audio",
+      "preview_bucket_name": "podcast-audio-preview"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "devnote.agence-webup.com",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    // NF-54 : défense en profondeur, désactivée par défaut pour permettre le
+    // développement local. À passer à "true" en production une fois Access
+    // configuré (§9), avec ACCESS_TEAM_DOMAIN et ACCESS_AUD renseignés
+    // (ex. via `wrangler secret put` ou une section [env.production.vars]).
+    "ENFORCE_ACCESS": "false",
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": ""
   }
 }

@@ -28,3 +28,9 @@ pnpm-debug.log*
 public/dev-audio/
 *.mp3
 *.wav
+
+# généré par `wrangler types`
+worker-configuration.d.ts
+
+# wrangler
+.wrangler/

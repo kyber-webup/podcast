@@ -1,1 +1,51 @@
 @import "tailwindcss";
+
+/* NF-21 : variables CSS (couleurs/rayons) — palette neutre provisoire, à remplacer par la charte de Simon. */
+@theme {
+  --color-accent: oklch(0.42 0.09 259);
+  --color-accent-contrast: oklch(0.98 0 0);
+  --radius-control: 0.5rem;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+@layer utilities {
+  /* NF-01 : lien d'évitement, visible seulement au focus */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-contrast;
+  }
+}
+
+/* NF-09 : respect de prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* NF-05 : zone de préhension du curseur épaissie, au-delà du track visuel */
+input[type="range"] {
+  height: 2.75rem;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+}

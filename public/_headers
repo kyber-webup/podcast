@@ -2,3 +2,5 @@
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: same-origin
   X-Content-Type-Options: nosniff
+  Content-Security-Policy: default-src 'self'
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
