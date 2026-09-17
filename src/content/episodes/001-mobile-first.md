@@ -2,9 +2,9 @@
 title: "E-commerce : penser mobile d'abord"
 date: 2026-09-14
 duration: "20:14"
-file: "001-mobile-first-ecommerce.mp3"
+file: "001-mobile-first.mp3"
 description: "Pourquoi le mobile first reste mal compris en e-commerce."
-hosts: ["Animateur 1", "Animateur 2"]
+hosts: ["Elia", "Simon"]
 chapters:
   - { start: "00:00", title: "Introduction" }
   - { start: "01:45", title: "Mobile first en e-commerce" }
