@@ -1,51 +1,89 @@
 @import "tailwindcss";
 
-/* NF-21 : variables CSS (couleurs/rayons) — palette neutre provisoire, à remplacer par la charte de Simon. */
+/*
+ * Bitcount Grid Single (OFL), sous-ensemble latin, graisse 300 : police pixel du
+ * compteur de l'écran LCD. Servie depuis public/fonts/ (NF-22) : placée dans src/,
+ * Vite l'inlinerait en data: (fichier < 4 Ko), ce que la CSP font-src 'self' bloque.
+ */
+@font-face {
+  font-family: "Bitcount Grid Single";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/bitcount-grid-single-latin-300-normal.woff2") format("woff2");
+}
+
+/*
+ * Couleurs, tailles, espacements et arrondis viennent de la palette et des échelles
+ * par défaut de Tailwind. Le thème n'ajoute que ce qu'elles n'ont pas : les polices
+ * et les halos néon de la maquette (utilisables comme shadow-glow, inset-shadow-glow,
+ * drop-shadow-glow, animate-glow-pulse).
+ */
 @theme {
-  --color-accent: oklch(0.42 0.09 259);
-  --color-accent-contrast: oklch(0.98 0 0);
-  --radius-control: 0.5rem;
+  --font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-counter: "Bitcount Grid Single", var(--font-mono);
+
+  --shadow-glow: 0 0 6px 0 var(--color-cyan-400);
+  --inset-shadow-glow: inset 0 0 5px 0 var(--color-cyan-400);
+  --drop-shadow-glow: 0 0 3px currentColor;
+
+  /* Halo au repos du pouce du curseur de position : discret tant qu'on ne survole
+     pas / ne touche pas le pouce (voir range-thumb:hover et range-thumb:active). */
+  --shadow-glow-subtle: 0 0 1px 0 var(--color-cyan-400);
+  --inset-shadow-glow-subtle: inset 0 0 1px 0 var(--color-cyan-400);
+
+  /* Bouton lecture en pause : seul le halo extérieur respire, l'inset reste fixe. */
+  --animate-glow-pulse: glow-pulse 1.8s ease-in-out infinite;
+
+  @keyframes glow-pulse {
+
+    0%,
+    100% {
+      box-shadow: var(--inset-shadow-glow);
+    }
+
+    50% {
+      box-shadow: var(--inset-shadow-glow), var(--shadow-glow);
+    }
+  }
+}
+
+/* Pseudo-éléments du curseur de position, à cibler séparément par moteur. */
+@custom-variant range-track {
+  &::-webkit-slider-runnable-track {
+    @slot;
+  }
+
+  &::-moz-range-track {
+    @slot;
+  }
+}
+
+@custom-variant range-thumb {
+  &::-webkit-slider-thumb {
+    @slot;
+  }
+
+  &::-moz-range-thumb {
+    @slot;
+  }
 }
 
 @layer base {
   :focus-visible {
-    outline: 3px solid var(--color-accent);
-    outline-offset: 2px;
-  }
-
-  html {
-    -webkit-text-size-adjust: 100%;
+    @apply outline-2 outline-offset-2 outline-cyan-400;
   }
 }
 
-@layer utilities {
-  /* NF-01 : lien d'évitement, visible seulement au focus */
-  .skip-link {
-    @apply sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-contrast;
-  }
-}
-
-/* NF-09 : respect de prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* NF-05 : zone de préhension du curseur épaissie, au-delà du track visuel */
-input[type="range"] {
-  height: 2.75rem;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 1.75rem;
-  height: 1.75rem;
 }

@@ -25,7 +25,10 @@ export function parseTimecode(input: number | string): number {
   return minutes * 60 + seconds;
 }
 
-export function formatTime(totalSeconds: number): string {
+/**
+ * `pad: true` force les minutes sur deux chiffres (« 02:24 »), comme la maquette.
+ */
+export function formatTime(totalSeconds: number, options: { pad?: boolean } = {}): string {
   const seconds = Math.max(0, Math.round(totalSeconds));
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -34,7 +37,8 @@ export function formatTime(totalSeconds: number): string {
   if (hours > 0) {
     return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }
-  return `${minutes}:${String(secs).padStart(2, "0")}`;
+  const displayedMinutes = options.pad ? String(minutes).padStart(2, "0") : String(minutes);
+  return `${displayedMinutes}:${String(secs).padStart(2, "0")}`;
 }
 
 export function toSpokenTime(totalSeconds: number): string {

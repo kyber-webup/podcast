@@ -1,6 +1,7 @@
 ---
 import { formatTime, toSpokenTime } from "../lib/time";
 import type { Chapter } from "../lib/chapters";
+import { chapterButtonClass, chapterItemClass, chapterTimeClass, chapterTitleClass } from "../lib/classes";
 
 interface Props {
   chapters: Chapter[];
@@ -10,24 +11,51 @@ interface Props {
 const { chapters, currentIndex } = Astro.props;
 ---
 
-<nav aria-label="Chapitres" id="chapters" hidden={chapters.length === 0}>
-  <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Chapitres</h2>
-  <ol id="chapter-list-items" class="mt-3 flex flex-col gap-1">
-    {chapters.map((chapter, index) => (
-      <li>
-        <button
-          type="button"
-          data-chapter-index={index}
-          class="flex w-full min-h-11 items-center gap-3 rounded-control px-3 py-2 text-left text-slate-700 aria-[current=true]:bg-accent aria-[current=true]:font-semibold aria-[current=true]:text-accent-contrast hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          aria-current={index === currentIndex ? "true" : undefined}
-          aria-label={`Aller au chapitre ${index + 1} : ${chapter.title}, à ${toSpokenTime(chapter.start)}`}
-        >
-          <span aria-hidden="true" class="tabular-nums text-sm opacity-80">
-            {formatTime(chapter.start)}
-          </span>
-          <span>{chapter.title}</span>
-        </button>
-      </li>
-    ))}
+{/* La marge est portée par l'élément masquable : pas de vide quand l'épisode n'a pas de chapitre. */}
+<nav aria-label="Chapitres" id="chapters" hidden={chapters.length === 0} class="mt-12">
+  <h2>
+    {/* La liste est repliée par défaut ; le caret pivote via aria-expanded (piloté par player.ts). */}
+    <button
+      type="button"
+      id="btn-toggle-chapters"
+      aria-expanded="false"
+      aria-controls="chapter-list-items"
+      class="group flex w-full cursor-pointer items-center justify-between gap-3 text-base font-bold text-cyan-400 transition-colors hover:text-cyan-200"
+    >
+      Chapitres
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 12 8"
+        class="h-2 w-auto shrink-0 transition-transform duration-200 group-aria-expanded:rotate-180"
+        fill="none"
+      >
+        <path d="M0 0H12L6 8L0 0Z" fill="currentColor"></path>
+      </svg>
+    </button>
+  </h2>
+
+  <ol
+    id="chapter-list-items"
+    hidden
+    class="mt-2 overflow-hidden rounded-xs border border-rose-500 bg-gray-800 inset-shadow-sm"
+  >
+    {
+      chapters.map((chapter, index) => (
+        <li class={chapterItemClass}>
+          <button
+            type="button"
+            data-chapter-index={index}
+            class={chapterButtonClass}
+            aria-current={index === currentIndex ? "true" : undefined}
+            aria-label={`Aller au chapitre ${index + 1} : ${chapter.title}, à ${toSpokenTime(chapter.start)}`}
+          >
+            <span aria-hidden="true" class={chapterTimeClass}>
+              {formatTime(chapter.start, { pad: true })}
+            </span>
+            <span class={chapterTitleClass}>{chapter.title}</span>
+          </button>
+        </li>
+      ))
+    }
   </ol>
 </nav>

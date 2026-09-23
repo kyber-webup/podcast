@@ -34,3 +34,5 @@ worker-configuration.d.ts
 
 # wrangler
 .wrangler/
+
+docs/

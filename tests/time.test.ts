@@ -33,6 +33,16 @@ describe("formatTime", () => {
   ])("formats %i seconds as %s", (seconds, expected) => {
     expect(formatTime(seconds)).toBe(expected);
   });
+
+  it.each([
+    [0, "00:00"],
+    [59, "00:59"],
+    [144, "02:24"],
+    [3599, "59:59"],
+    [3600, "1:00:00"],
+  ])("pads minutes for %i seconds as %s", (seconds, expected) => {
+    expect(formatTime(seconds, { pad: true })).toBe(expected);
+  });
 });
 
 describe("toSpokenTime", () => {
