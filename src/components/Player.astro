@@ -22,18 +22,24 @@ const startTime = formatTime(0, { pad: true });
 // Segments éteints de l'afficheur : le minuteur, tous chiffres à 8 (voir player.ts).
 const ghostTime = startTime.replace(/\d/g, "8");
 
-const transportButtonClass =
-  "flex flex-1 items-center justify-center text-gray-400 hover:cursor-pointer transition-colors hover:text-white disabled:pointer-events-none disabled:opacity-35";
+// Le temps de l'appui, tous les boutons de transport prennent l'aspect du bouton
+// de lecture actif : aplat enfoncé en thème clair, halo interne en thème sombre.
+const transportButtonClass = [
+  "flex flex-1 items-center justify-center text-control-ink hover:cursor-pointer transition-colors hover:text-control-ink-strong",
+  "active:bg-active-bg active:text-control-ink-strong active:inset-shadow-[1px_1px_1px_0_--alpha(var(--color-black)/25%)]",
+  "dark:active:inset-shadow-glow",
+  "disabled:pointer-events-none disabled:opacity-35",
+].join(" ");
 
 const hostChipClass =
-  "min-w-12 bg-rose-400/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-rose-400";
+  "min-w-12 bg-screen-ink/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-screen-ink";
 ---
 
 <section aria-label="Lecteur">
   <audio id="audio" preload="metadata" src={audioSrc}></audio>
 
   {/* Écran LCD : animateurs, minuteur, titre de l'épisode et vu-mètre. */}
-  <div class="@container flex min-h-46 flex-col rounded-xs border border-rose-400 bg-gray-900">
+  <div class="@container flex min-h-46 flex-col rounded-xs border border-screen-edge bg-screen inset-shadow-[-2px_-2px_0_0_var(--color-screen-edge)] dark:inset-shadow-none">
     <div class="flex items-start justify-between gap-3 px-3 pt-3">
       {/* Le nombre de colonnes suit la largeur de l'écran lui-même (@container),
       pas celle de la fenêtre : de 2 colonnes sur les plus petits appareils à 6 en
@@ -58,15 +64,15 @@ const hostChipClass =
         }
       </ul>
 
-      <p class="relative shrink-0 font-lcd text-2xl leading-none text-rose-400">
-        <span id="time-ghost" aria-hidden="true" class="text-rose-400/25">{ghostTime}</span>
+      <p class="relative shrink-0 font-lcd text-2xl leading-none text-screen-ink">
+        <span id="time-ghost" aria-hidden="true" class="text-screen-ink/25">{ghostTime}</span>
         <span id="time-big" class="absolute inset-0">{startTime}</span>
       </p>
     </div>
 
     <p
       id="player-episode-title"
-      class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-rose-400"
+      class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink"
     >
       {title}
     </p>
@@ -83,7 +89,7 @@ const hostChipClass =
       aria-hidden="true"
       viewBox="0 0 334 37"
       preserveAspectRatio="none"
-      class="mt-auto block h-9.25 w-full px-1.5 text-rose-400 drop-shadow-glow stroke-4 sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
+      class="mt-auto block h-9.25 w-full px-1.5 text-screen-ink drop-shadow-glow stroke-4 sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
       fill="none"
     >
       <line x1="9.00" y1="37" x2="9.00" y2="37" stroke="currentColor"></line>
@@ -116,23 +122,23 @@ const hostChipClass =
     id="player-error"
     role="alert"
     hidden
-    class="mt-4 flex items-center justify-between gap-3 rounded-xs border border-rose-500 bg-rose-500/20 px-3 py-2 text-xs text-rose-400"
+    class="mt-4 flex items-center justify-between gap-3 rounded-xs border border-screen-edge bg-screen-ink/15 px-3 py-2 text-xs text-ink"
   >
     La lecture a échoué.
     <button
       type="button"
       id="btn-retry"
-      class="shrink-0 rounded-xs border border-rose-500 px-2.5 py-1 font-bold hover:bg-rose-500/30"
+      class="shrink-0 rounded-xs border border-screen-edge px-2.5 py-1 font-bold hover:bg-screen-ink/25"
     >
       Réessayer
     </button>
   </p>
 
-  <p id="player-chapter-title" hidden={!currentChapter} class="mt-10.5 truncate text-xs text-gray-400">
+  <p id="player-chapter-title" hidden={!currentChapter} class="mt-10.5 truncate text-xs text-muted">
     {currentChapter ? formatChapterLabel(currentChapterIndex, currentChapter.title) : ""}
   </p>
 
-  <p class="mt-1 text-xs font-bold text-white">
+  <p class="mt-1 text-xs font-bold text-ink">
     <span id="time-current">{startTime}</span> / <span id="time-duration">{formatTime(duration, { pad: true })}</span>
   </p>
 
@@ -149,13 +155,13 @@ const hostChipClass =
   />
 
   {/* Transport : chapitre précédent, −15 s, lecture/pause, +15 s, chapitre suivant */}
-  <div class="mt-8.5 flex h-12 rounded-sm border border-gray-700 bg-gray-800">
+  <div class="mt-8.5 flex h-12 rounded-sm border border-control-edge bg-control">
     <button
       type="button"
       id="btn-prev-chapter"
       disabled={!hasPrevChapter}
       aria-label="Chapitre précédent"
-      class={`${transportButtonClass} border-r border-gray-700`}
+      class={`${transportButtonClass} border-r border-control-edge`}
     >
       <svg aria-hidden="true" viewBox="0 0 25 20" class="h-5 w-auto -scale-x-100" fill="none">
         <path
@@ -172,7 +178,7 @@ const hostChipClass =
       type="button"
       id="btn-back-15"
       aria-label="Reculer de 15 secondes"
-      class={`${transportButtonClass} border-r border-gray-700`}
+      class={`${transportButtonClass} border-r border-control-edge`}
     >
       <svg aria-hidden="true" viewBox="0 0 21 20" class="h-5 w-auto -scale-x-100" fill="none">
         <path
@@ -188,7 +194,7 @@ const hostChipClass =
       type="button"
       id="btn-play-pause"
       data-state="idle"
-      class={`${transportButtonClass} border-2 border-transparent not-data-[state=idle]:border-cyan-400 not-data-[state=idle]:text-white data-[state=playing]:inset-shadow-glow data-[state=paused]:animate-glow-pulse`}
+      class={`${transportButtonClass} not-data-[state=idle]:bg-active-bg not-data-[state=idle]:text-control-ink-strong not-data-[state=idle]:inset-shadow-[1px_1px_1px_0_--alpha(var(--color-black)/25%)] dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:inset-shadow-none dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse`}
     >
       <span id="icon-play" class="flex">
         <svg aria-hidden="true" viewBox="0 0 8 16" class="h-5 w-auto" fill="none">
@@ -210,7 +216,7 @@ const hostChipClass =
       type="button"
       id="btn-forward-15"
       aria-label="Avancer de 15 secondes"
-      class={`${transportButtonClass} border-l border-gray-700`}
+      class={`${transportButtonClass} border-l border-control-edge`}
     >
       <svg aria-hidden="true" viewBox="0 0 21 20" class="h-5 w-auto" fill="none">
         <path
@@ -227,7 +233,7 @@ const hostChipClass =
       id="btn-next-chapter"
       disabled={!hasNextChapter}
       aria-label="Chapitre suivant"
-      class={`${transportButtonClass} border-l border-gray-700`}
+      class={`${transportButtonClass} border-l border-control-edge`}
     >
       <svg aria-hidden="true" viewBox="0 0 25 20" class="h-5 w-auto" fill="none">
         <path

@@ -26,10 +26,14 @@
 }
 
 /*
- * Couleurs, tailles, espacements et arrondis viennent de la palette et des échelles
- * par défaut de Tailwind. Le thème n'ajoute que ce qu'elles n'ont pas : les polices
- * et les halos néon de la maquette (utilisables comme shadow-glow, inset-shadow-glow,
- * drop-shadow-glow, animate-glow-pulse).
+ * Tailles, espacements et arrondis viennent des échelles par défaut de Tailwind.
+ * Les couleurs passent par des jetons nommés par rôle (bg-page, text-ink,
+ * border-control-edge…), chacun donnant sa valeur claire puis sa valeur sombre
+ * via light-dark(). C'est `color-scheme` (plus bas) qui choisit entre les deux :
+ * le réglage du système par défaut, ou le choix de l'utilisateur s'il a utilisé
+ * la bascule de l'en-tête. Valeurs claires : maquette 28:93. Valeurs sombres :
+ * maquette 23:2, couleurs Tailwind recopiées telles quelles (une variable de
+ * palette non utilisée par une classe n'est pas publiée sur :root).
  */
 @theme {
   --font-mono:
@@ -41,14 +45,56 @@
   /* Pastilles des animateurs sur l'écran : 10 px, sous l'échelle par défaut. */
   --text-2xs: 0.625rem;
 
-  --shadow-glow: 0 0 6px 0 var(--color-cyan-400);
-  --inset-shadow-glow: inset 0 0 5px 0 var(--color-cyan-400);
+  /* Page et textes */
+  --color-page: light-dark(#ffeee5, oklch(27.8% 0.033 256.848));
+  /* gray-800 */
+  --color-ink: light-dark(#331200, #ffffff);
+  --color-muted: light-dark(#331200, oklch(70.7% 0.022 261.325));
+  /* gray-400 */
+
+  /* En-tête */
+  --color-header: light-dark(#ffeee5, oklch(21% 0.034 264.665));
+  /* gray-900 */
+  --color-header-edge: light-dark(#331200, color-mix(in oklab, oklch(95.6% 0.045 203.388) 50%, transparent));
+  /* cyan-100 à 50 % */
+  --color-header-ink: light-dark(#000000, oklch(71.2% 0.194 13.428));
+  /* rose-400 */
+
+  /* Écran */
+  --color-screen: light-dark(#331200, oklch(21% 0.034 264.665));
+  --color-screen-edge: light-dark(#000000, oklch(71.2% 0.194 13.428));
+  --color-screen-ink: light-dark(#ea9800, oklch(71.2% 0.194 13.428));
+
+  /* Rangée de transport et curseur de position */
+  --color-control: light-dark(#ffeee5, oklch(27.8% 0.033 256.848));
+  --color-control-edge: light-dark(#000000, oklch(37.3% 0.034 259.733));
+  /* gray-700 */
+  --color-control-ink: light-dark(#331200, oklch(70.7% 0.022 261.325));
+  --color-control-ink-strong: light-dark(#000000, #ffffff);
+  --color-active: light-dark(#ea9800, oklch(78.9% 0.154 211.53));
+  /* cyan-400 */
+  --color-active-bg: light-dark(#ffcaad, transparent);
+  --color-track: light-dark(#f8ead8, oklch(27.8% 0.033 256.848));
+  --color-thumb: light-dark(#f8ead8, oklch(95.6% 0.045 203.388));
+  /* cyan-100 */
+
+  /* Liste des épisodes */
+  --color-surface: light-dark(#ffffff, oklch(27.8% 0.033 256.848));
+  --color-surface-edge: light-dark(#000000, oklch(71.2% 0.194 13.428));
+  --color-row-edge: light-dark(#d2cbc7, oklch(71.2% 0.194 13.428));
+  --color-row-current: light-dark(#ffdecc, color-mix(in oklab, oklch(64.5% 0.246 16.439) 50%, oklch(27.8% 0.033 256.848)));
+  /* rose-500 sur gray-800 */
+  --color-heading: light-dark(#000000, transparent);
+  --color-heading-ink: light-dark(#ffffff, oklch(71.2% 0.194 13.428));
+
+  --shadow-glow: 0 0 6px 0 var(--color-active);
+  --inset-shadow-glow: inset 0 0 5px 0 var(--color-active);
   --drop-shadow-glow: 0 0 3px currentColor;
 
   /* Halo au repos du pouce du curseur de position : discret tant qu'on ne survole
      pas / ne touche pas le pouce (voir range-thumb:hover et range-thumb:active). */
-  --shadow-glow-subtle: 0 0 1px 0 var(--color-cyan-400);
-  --inset-shadow-glow-subtle: inset 0 0 1px 0 var(--color-cyan-400);
+  --shadow-glow-subtle: 0 0 1px 0 var(--color-active);
+  --inset-shadow-glow-subtle: inset 0 0 1px 0 var(--color-active);
 
   /* Bouton lecture en pause : seul le halo extérieur respire, l'inset reste fixe. */
   --animate-glow-pulse: glow-pulse 1.8s ease-in-out infinite;
@@ -63,6 +109,23 @@
     50% {
       box-shadow: var(--inset-shadow-glow), var(--shadow-glow);
     }
+  }
+}
+
+/*
+ * Thème sombre pour les rares différences qui ne sont pas des couleurs (halos,
+ * ombres, disposition du titre de la liste). Même règle que pour les jetons :
+ * le système décide, sauf si data-theme porte un choix explicite.
+ */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+
+  &:where(:root[data-theme="dark"], :root[data-theme="dark"] *) {
+    @slot;
   }
 }
 
@@ -88,8 +151,22 @@
 }
 
 @layer base {
+
+  /* Sans choix explicite, light-dark() suit le réglage du système. */
+  :root {
+    color-scheme: light dark;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-cyan-400;
+    @apply outline-2 outline-offset-2 outline-active;
   }
 }
 

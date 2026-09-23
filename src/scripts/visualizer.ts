@@ -21,7 +21,7 @@ const MAX_DECIBELS = -32;
 const MIN_BAR_HEIGHT = 1; // plancher pendant la lecture
 // À la pause, les barres se figent puis retombent, comme l'aiguille d'un vu-mètre
 // physique, au lieu de disparaître d'un coup.
-const RELEASE_MS = 1000;
+const RELEASE_MS = 500;
 const MAX_BAR_HEIGHT = 34; // base du vu-mètre à y = 37 (viewBox)
 // Pondération par barre : léger rattrapage vers les aigus (la voix y perd de
 // l'énergie) et cloche centrée, pour un pic visuel au milieu du vu-mètre.

@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import "../styles/global.css";
 import Player from "../components/Player.astro";
 import EpisodeList from "../components/EpisodeList.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
 import { getCurrentChapterIndex } from "../lib/chapters";
 import { buildRoster } from "../lib/team";
 
@@ -36,26 +37,28 @@ const episodesData = episodes.map((episode) => ({
 }));
 ---
 
-<html lang="fr" class="scheme-dark">
+<html lang="fr">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
-		<meta name="theme-color" content="#101828" /><!-- gray-900 -->
+		<meta name="theme-color" content="#ffeee5" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#101828" media="(prefers-color-scheme: dark)" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{current.data.title} — DevNote</title>
 	</head>
-	<body class="min-h-screen bg-gray-800 font-mono text-white">
+	<body class="min-h-screen bg-page font-mono text-ink">
 		<a
 			href="#episode-list"
-			class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-cyan-400 focus:px-4 focus:py-2 focus:text-gray-900"
+			class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-active focus:px-4 focus:py-2 focus:text-page"
 		>Aller à la liste des épisodes</a>
 
 		<header
-			class="flex h-10 items-center justify-center border-b border-cyan-100/50 bg-gray-900"
+			class="relative flex h-10 items-center justify-center border-b border-header-edge bg-header"
 		>
-			<h1 class="text-sm font-bold text-rose-400">DevNote player</h1>
+			<h1 class="text-sm font-bold text-header-ink">DevNote player</h1>
+			<ThemeToggle />
 		</header>
 
 		<main>
@@ -76,7 +79,7 @@ const episodesData = episodes.map((episode) => ({
 
 		<script type="application/json" id="episodes-data" is:inline set:html={JSON.stringify(episodesData)} />
 
-		<footer class="mx-auto w-full max-w-xl px-5 pb-6 text-xs text-gray-400">
+		<footer class="mx-auto w-full max-w-xl px-5 pb-6 text-xs text-muted">
 			<p>DevNote — podcast interne de l'agence.</p>
 		</footer>
 	</body>

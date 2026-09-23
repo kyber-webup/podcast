@@ -35,7 +35,7 @@ function episodeCode(id: string): string | undefined {
 <section aria-labelledby="episodes-heading" id="episode-list" class="mt-16">
   <h2 id="episodes-heading" class={listHeadingClass}>Liste des épisodes</h2>
 
-  <ol class={`mt-3 ${listBoxClass}`}>
+  <ol class={listBoxClass}>
     {
       episodes.map((episode) => {
         const isCurrent = episode.id === currentId;
