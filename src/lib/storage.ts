@@ -46,13 +46,9 @@ export function parseState(raw: string | null): StoredState {
   }
 }
 
-export function serializeState(state: StoredState): string {
-  return JSON.stringify(state);
-}
-
 export function writeState(state: StoredState, write: (key: string, value: string) => void): boolean {
   try {
-    write(STORAGE_KEY, serializeState(state));
+    write(STORAGE_KEY, JSON.stringify(state));
     return true;
   } catch {
     return false;

@@ -9,7 +9,7 @@ export const listBoxClass = "overflow-hidden rounded-xs border border-surface-ed
 export const rowItemClass = "group flex border-b border-row-edge last:border-b-0";
 
 export const rowButtonClass =
-  "flex h-11 min-w-0 flex-1 items-center gap-3 px-3 text-left text-xs text-ink hover:cursor-pointer hover:bg-row-current/50 aria-[current=true]:bg-row-current aria-[current=true]:font-bold group-aria-[current=true]:bg-row-current group-aria-[current=true]:font-bold";
+  "flex h-11 min-w-0 flex-1 items-center gap-3 px-3 text-left text-xs text-ink hover:cursor-pointer hover:bg-row-current/50 group-aria-[current=true]:bg-row-current group-aria-[current=true]:font-bold";
 
 export const rowLeadClass = "w-12 shrink-0";
 

@@ -45,19 +45,17 @@
   --text-2xs: 0.625rem;
 
   /* Page et textes */
-  --color-page: light-dark(#ffeee5, oklch(27.8% 0.033 256.848));
-  /* gray-800 */
+  --color-page: light-dark(#ffeee5, oklch(27.8% 0.033 256.848)); /* gray-800 */
   --color-ink: light-dark(#331200, #ffffff);
-  --color-muted: light-dark(#331200, oklch(70.7% 0.022 261.325));
-  /* gray-400 */
+  --color-muted: light-dark(#331200, oklch(70.7% 0.022 261.325)); /* gray-400 */
 
   /* En-tête */
-  --color-header: light-dark(#ffeee5, oklch(21% 0.034 264.665));
-  /* gray-900 */
-  --color-header-edge: light-dark(#331200, color-mix(in oklab, oklch(95.6% 0.045 203.388) 50%, transparent));
-  /* cyan-100 à 50 % */
-  --color-header-ink: light-dark(#000000, oklch(71.2% 0.194 13.428));
-  /* rose-400 */
+  --color-header: light-dark(#ffeee5, oklch(21% 0.034 264.665)); /* gray-900 */
+  --color-header-edge: light-dark(
+    #331200,
+    color-mix(in oklab, oklch(95.6% 0.045 203.388) 50%, transparent)
+  ); /* cyan-100 à 50 % */
+  --color-header-ink: light-dark(#000000, oklch(71.2% 0.194 13.428)); /* rose-400 */
 
   /* Écran */
   --color-screen: light-dark(#331200, oklch(21% 0.034 264.665));
@@ -66,16 +64,13 @@
 
   /* Rangée de transport et curseur de position */
   --color-control: light-dark(#ffeee5, oklch(27.8% 0.033 256.848));
-  --color-control-edge: light-dark(#000000, oklch(37.3% 0.034 259.733));
-  /* gray-700 */
+  --color-control-edge: light-dark(#000000, oklch(37.3% 0.034 259.733)); /* gray-700 */
   --color-control-ink: light-dark(#331200, oklch(70.7% 0.022 261.325));
   --color-control-ink-strong: light-dark(#000000, #ffffff);
-  --color-active: light-dark(#ea9800, oklch(78.9% 0.154 211.53));
-  /* cyan-400 */
+  --color-active: light-dark(#ea9800, oklch(78.9% 0.154 211.53)); /* cyan-400 */
   --color-active-bg: light-dark(#ffcaad, transparent);
   --color-track: light-dark(#f8ead8, oklch(27.8% 0.033 256.848));
-  --color-thumb: light-dark(#f8ead8, oklch(95.6% 0.045 203.388));
-  /* cyan-100 */
+  --color-thumb: light-dark(#f8ead8, oklch(95.6% 0.045 203.388)); /* cyan-100 */
 
   /* Liste des épisodes */
   --color-surface: light-dark(#ffffff, oklch(27.8% 0.033 256.848));
@@ -84,8 +79,7 @@
   --color-row-current: light-dark(
     #ffdecc,
     color-mix(in oklab, oklch(64.5% 0.246 16.439) 50%, oklch(27.8% 0.033 256.848))
-  );
-  /* rose-500 sur gray-800 */
+  ); /* rose-500 sur gray-800 */
   --color-heading: light-dark(#000000, transparent);
   --color-heading-ink: light-dark(#ffffff, oklch(71.2% 0.194 13.428));
 

@@ -35,7 +35,8 @@ const systemTheme = (): Theme => (window.matchMedia?.("(prefers-color-scheme: da
 
 // Couleur de la barre du navigateur sur mobile. Les deux balises <meta> du
 // document sont conditionnées au thème du système : on les aligne toutes les
-// deux sur le choix de l'utilisateur. Valeurs reprises de --color-page.
+// deux sur le choix de l'utilisateur. Valeurs reprises de --color-page (clair) et
+// --color-header (sombre).
 const BROWSER_BAR_COLOR: Record<Theme, string> = { light: "#ffeee5", dark: "#101828" };
 
 const applyTheme = (theme: Theme): void => {
@@ -66,8 +67,4 @@ function initThemeToggle(): void {
   });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initThemeToggle, { once: true });
-} else {
-  initThemeToggle();
-}
+initThemeToggle();

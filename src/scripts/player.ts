@@ -106,6 +106,7 @@ function initPlayer(): void {
     !(timeGhostEl instanceof HTMLElement) ||
     !(timeDurationEl instanceof HTMLElement) ||
     !(errorBox instanceof HTMLElement) ||
+    !(retryButton instanceof HTMLButtonElement) ||
     !(episodeTitleEl instanceof HTMLElement) ||
     !(hostsEl instanceof HTMLElement) ||
     !(chapterTitleEl instanceof HTMLElement) ||
@@ -169,7 +170,6 @@ function initPlayer(): void {
     errorBox.hidden = false;
   };
 
-  // Allume les pastilles des animateurs de l'épisode, éteint les autres.
   const renderHosts = (hosts: string[]): void => {
     hostsEl.querySelectorAll<HTMLElement>("[data-host]").forEach((chip) => {
       const isHost = hosts.includes(chip.dataset.host ?? "");
@@ -218,19 +218,11 @@ function initPlayer(): void {
   };
 
   const updateEpisodeListCurrent = (episodeId: string): void => {
-    document.querySelectorAll<HTMLElement>("[data-episode-id]").forEach((el) => {
-      if (el.tagName !== "LI") {
-        return;
-      }
-      const isCurrent = el.dataset.episodeId === episodeId;
-      if (isCurrent) {
-        el.setAttribute("aria-current", "true");
+    document.querySelectorAll<HTMLLIElement>("li[data-episode-id]").forEach((row) => {
+      if (row.dataset.episodeId === episodeId) {
+        row.setAttribute("aria-current", "true");
       } else {
-        el.removeAttribute("aria-current");
-      }
-      const marker = el.querySelector<HTMLElement>(".episode-current-marker");
-      if (marker) {
-        marker.hidden = !isCurrent;
+        row.removeAttribute("aria-current");
       }
     });
   };
@@ -462,7 +454,7 @@ function initPlayer(): void {
     audio.currentTime = next;
   });
 
-  retryButton?.addEventListener("click", () => {
+  retryButton.addEventListener("click", () => {
     hideError();
     audio.load();
     audio.play().catch(showError);
@@ -493,8 +485,4 @@ function initPlayer(): void {
   loadEpisode(resolveInitialEpisode(episodes, storedState)); // F-20 : jamais d'autoplay
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initPlayer);
-} else {
-  initPlayer();
-}
+initPlayer();

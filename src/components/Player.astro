@@ -38,7 +38,6 @@ const hostChipClass =
 <section aria-label="Lecteur">
   <audio id="audio" preload="metadata" src={audioSrc}></audio>
 
-  {/* Écran LCD : animateurs, minuteur, titre de l'épisode et vu-mètre. */}
   <div class="@container flex min-h-46 flex-col rounded-xs border border-screen-edge bg-screen inset-shadow-[-2px_-2px_0_0_var(--color-screen-edge)] dark:inset-shadow-none">
     <div class="flex items-start justify-between gap-3 px-3 pt-3">
       {/* Le nombre de colonnes suit la largeur de l'écran lui-même (@container),
@@ -155,7 +154,6 @@ const hostChipClass =
     aria-valuetext={`${toSpokenTime(0)} sur ${toSpokenTime(duration)}`}
   />
 
-  {/* Transport : chapitre précédent, −15 s, lecture/pause, +15 s, chapitre suivant */}
   <div class="mt-8.5 flex h-12 rounded-sm border border-control-edge bg-control">
     <button
       type="button"

@@ -14,7 +14,7 @@ export type ChapterHandlers = {
   onNext: () => void;
 } | null;
 
-export function isMediaSessionSupported(): boolean {
+function isMediaSessionSupported(): boolean {
   return "mediaSession" in navigator; // F-70
 }
 

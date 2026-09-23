@@ -15,11 +15,11 @@ const current = episodes[0];
 const roster = buildRoster(episodes.flatMap((episode) => episode.data.hosts));
 
 // En dev, PUBLIC_AUDIO_BASE peut pointer vers public/dev-audio/ (voir README).
-// En production, la route /audio/<fichier> est servie par le Worker (étape 9).
+// En production, la route /audio/<fichier> est servie par le Worker.
 const audioBase = import.meta.env.PUBLIC_AUDIO_BASE ?? "/audio";
 
 // État initial avant JS : aucune lecture n'a eu lieu (F-20), le contrôleur applique
-// la position sauvegardée dès son démarrage (voir src/scripts/player.ts, étape 5).
+// la position sauvegardée dès son démarrage (voir src/scripts/player.ts).
 const currentChapterIndex = getCurrentChapterIndex(current.data.chapters, 0);
 
 // §5.3 : les métadonnées de tous les épisodes sont sérialisées ici, lues par le
