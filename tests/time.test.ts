@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTime, parseTimecode, toSpokenTime } from "../src/lib/time";
+import { formatTime, parseTimecode, toGhostTime, toSpokenTime } from "../src/lib/time";
 
 describe("parseTimecode", () => {
   it("parses mm:ss", () => {
@@ -60,5 +60,12 @@ describe("toSpokenTime", () => {
 
   it("includes hours when relevant", () => {
     expect(toSpokenTime(3723)).toBe("1 heure 2 minutes 3 secondes");
+  });
+});
+
+describe("toGhostTime", () => {
+  it("replaces every digit with 8 and keeps the separators", () => {
+    expect(toGhostTime("02:24")).toBe("88:88");
+    expect(toGhostTime("1:00:00")).toBe("8:88:88");
   });
 });

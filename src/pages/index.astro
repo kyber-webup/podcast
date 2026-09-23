@@ -6,6 +6,7 @@ import EpisodeList from "../components/EpisodeList.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import { getCurrentChapterIndex } from "../lib/chapters";
 import { buildRoster } from "../lib/team";
+import type { PlayerEpisode } from "../lib/playback";
 
 const episodes = (await getCollection("episodes")).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 const current = episodes[0];
@@ -24,7 +25,7 @@ const currentChapterIndex = getCurrentChapterIndex(current.data.chapters, 0);
 
 // §5.3 : les métadonnées de tous les épisodes sont sérialisées ici, lues par le
 // contrôleur au démarrage — pas de requête réseau supplémentaire pour ces données.
-const episodesData = episodes.map((episode) => ({
+const episodesData: PlayerEpisode[] = episodes.map((episode) => ({
   id: episode.id,
   title: episode.data.title,
   hosts: episode.data.hosts,

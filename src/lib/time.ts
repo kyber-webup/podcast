@@ -41,6 +41,11 @@ export function formatTime(totalSeconds: number, options: { pad?: boolean } = {}
   return `${displayedMinutes}:${String(secs).padStart(2, "0")}`;
 }
 
+/** Segments éteints de l'afficheur 7 segments : le minuteur avec tous ses chiffres à 8. */
+export function toGhostTime(formattedTime: string): string {
+  return formattedTime.replace(/\d/g, "8");
+}
+
 export function toSpokenTime(totalSeconds: number): string {
   const total = Math.max(0, Math.round(totalSeconds));
   const hours = Math.floor(total / 3600);

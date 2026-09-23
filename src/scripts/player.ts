@@ -1,5 +1,6 @@
-import { formatTime, toSpokenTime } from "../lib/time";
+import { formatTime, toGhostTime, toSpokenTime } from "../lib/time";
 import { formatChapterLabel, getCurrentChapterIndex, type Chapter } from "../lib/chapters";
+import { findInitialEpisode, getResumePosition, isCompleted, type PlayerEpisode } from "../lib/playback";
 import { STORAGE_KEY, parseState, updateEpisodeState, writeState, type StoredState } from "../lib/storage";
 import {
   setMediaSessionHandlers,
@@ -9,33 +10,21 @@ import {
 } from "./media-session";
 import { createVisualizer } from "./visualizer";
 
-type EpisodeData = {
-  id: string;
-  title: string;
-  hosts: string[];
-  date: string;
-  duration: number;
-  audioSrc: string;
-  chapters: Chapter[];
-};
-
 const SMALL_SEEK_STEP_SECONDS = 5;
 const LARGE_SEEK_STEP_SECONDS = 60;
 const SKIP_SECONDS = 15;
 const SAVE_THROTTLE_MS = 5000;
-const COMPLETED_RATIO = 0.95;
-const RESUME_END_MARGIN_SECONDS = 5;
 const DURATION_MISMATCH_THRESHOLD_SECONDS = 2;
 const PODCAST_NAME = "DevNote";
 
-function readEpisodesData(): EpisodeData[] {
+function readEpisodesData(): PlayerEpisode[] {
   const node = document.getElementById("episodes-data");
   if (!node?.textContent) {
     return [];
   }
   try {
     const data: unknown = JSON.parse(node.textContent);
-    return Array.isArray(data) ? (data as EpisodeData[]) : [];
+    return Array.isArray(data) ? (data as PlayerEpisode[]) : [];
   } catch {
     return [];
   }
@@ -51,24 +40,6 @@ function readStoredState(): StoredState {
 
 function persistState(state: StoredState): void {
   writeState(state, (key, value) => localStorage.setItem(key, value));
-}
-
-function resolveInitialEpisode(episodes: EpisodeData[], stored: StoredState): EpisodeData {
-  const requestedId = new URLSearchParams(window.location.search).get("e");
-  const byId = (id: string) => episodes.find((episode) => episode.id === id);
-
-  return (requestedId && byId(requestedId)) || (stored.lastEpisodeId && byId(stored.lastEpisodeId)) || episodes[0];
-}
-
-function resolveInitialPosition(position: number, duration: number, completed: boolean): number {
-  if (!completed && duration > 0 && position > duration - RESUME_END_MARGIN_SECONDS) {
-    return 0;
-  }
-  return position;
-}
-
-function computeIsCompleted(position: number, duration: number): boolean {
-  return duration > 0 && position / duration > COMPLETED_RATIO;
 }
 
 function initPlayer(): void {
@@ -125,7 +96,7 @@ function initPlayer(): void {
   const visualizer = createVisualizer(audio, waveformBars);
 
   let storedState = readStoredState();
-  let currentEpisode: EpisodeData | undefined;
+  let currentEpisode: PlayerEpisode | undefined;
   let duration = 0;
   let isSeeking = false;
   let lastSaveTime = 0;
@@ -149,8 +120,7 @@ function initPlayer(): void {
     const formatted = formatTime(position, { pad: true });
     timeCurrentEl.textContent = formatted;
     timeBigEl.textContent = formatted;
-    // Segments éteints derrière le minuteur : mêmes caractères, tous à 8.
-    timeGhostEl.textContent = formatted.replace(/\d/g, "8");
+    timeGhostEl.textContent = toGhostTime(formatted);
     seek.setAttribute("aria-valuetext", `${toSpokenTime(position)} sur ${toSpokenTime(duration)}`);
     // Peint la portion écoutée de la piste (voir #seek dans global.css).
     const percent = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
@@ -241,7 +211,7 @@ function initPlayer(): void {
       updateEpisodeState(
         storedState,
         currentEpisode.id,
-        { position: Math.round(position), completed: computeIsCompleted(position, duration) },
+        { position: Math.round(position), completed: isCompleted(position, duration) },
         new Date(),
       ),
     );
@@ -249,7 +219,7 @@ function initPlayer(): void {
 
   // Ne démarre jamais la lecture : sélectionner un épisode le charge à sa position
   // sauvegardée, l'utilisateur appuie ensuite sur Lecture (décision de Simon).
-  const loadEpisode = (episode: EpisodeData): void => {
+  const loadEpisode = (episode: PlayerEpisode): void => {
     if (currentEpisode && currentEpisode.id !== episode.id) {
       savePosition(audio.currentTime, { force: true }); // F-47
     }
@@ -262,7 +232,7 @@ function initPlayer(): void {
     document.title = `${episode.title} — ${PODCAST_NAME}`;
 
     const stored = storedState.episodes[episode.id];
-    const initialPosition = resolveInitialPosition(stored?.position ?? 0, duration, stored?.completed ?? false);
+    const initialPosition = getResumePosition(stored?.position ?? 0, duration, stored?.completed ?? false);
 
     seek.max = String(Math.round(duration));
     seek.value = String(Math.round(initialPosition));
@@ -482,7 +452,8 @@ function initPlayer(): void {
     });
   });
 
-  loadEpisode(resolveInitialEpisode(episodes, storedState)); // F-20 : jamais d'autoplay
+  const requestedId = new URLSearchParams(window.location.search).get("e");
+  loadEpisode(findInitialEpisode(episodes, requestedId, storedState.lastEpisodeId)); // F-20 : jamais d'autoplay
 }
 
 initPlayer();

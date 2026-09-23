@@ -1,5 +1,5 @@
 ---
-import { formatTime, toSpokenTime } from "../lib/time";
+import { formatTime, toGhostTime, toSpokenTime } from "../lib/time";
 import { formatChapterLabel, type Chapter } from "../lib/chapters";
 import { seekClass } from "../lib/classes";
 
@@ -19,8 +19,7 @@ const hasPrevChapter = currentChapterIndex > 0;
 const hasNextChapter = chapters.length > 0 && currentChapterIndex < chapters.length - 1;
 
 const startTime = formatTime(0, { pad: true });
-// Segments éteints de l'afficheur : le minuteur, tous chiffres à 8 (voir player.ts).
-const ghostTime = startTime.replace(/\d/g, "8");
+const ghostTime = toGhostTime(startTime);
 
 // Le temps de l'appui, tous les boutons de transport prennent l'aspect du bouton
 // de lecture actif : aplat enfoncé en thème clair, halo interne en thème sombre.
