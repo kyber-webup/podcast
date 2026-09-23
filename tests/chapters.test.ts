@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getCurrentChapterIndex, validateChapters, type Chapter } from "../src/lib/chapters";
+import {
+  formatChapterLabel,
+  getCurrentChapterIndex,
+  validateChapters,
+  type Chapter,
+} from "../src/lib/chapters";
 
 const chapters: Chapter[] = [
   { start: 0, title: "Introduction" },
@@ -64,5 +69,12 @@ describe("validateChapters", () => {
   it("rejects an empty title", () => {
     const invalid: Chapter[] = [{ start: 0, title: "  " }];
     expect(validateChapters(invalid, 300)).not.toBeNull();
+  });
+});
+
+describe("formatChapterLabel", () => {
+  it("numérote à partir de 1, sur deux chiffres", () => {
+    expect(formatChapterLabel(0, "Introduction")).toBe("CH 01 - Introduction");
+    expect(formatChapterLabel(9, "Conclusion")).toBe("CH 10 - Conclusion");
   });
 });

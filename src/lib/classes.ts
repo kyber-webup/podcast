@@ -2,16 +2,22 @@
 // (src/scripts/player.ts), qui reconstruit certains éléments en JS : une seule
 // définition garantit un rendu identique. Tailwind détecte les classes ici.
 
-export const chapterItemClass = "border-b border-rose-500 last:border-b-0";
+// Listes des chapitres et des épisodes : même gabarit de rangée (maquette 23:2).
+export const listBoxClass =
+  "overflow-hidden rounded-xs border border-rose-400 bg-gray-800 inset-shadow-sm";
 
-export const chapterButtonClass =
-  "flex h-11 w-full items-center gap-3 px-3 text-left text-xs text-white hover:cursor-pointer hover:bg-rose-500/20 aria-[current=true]:bg-rose-500/50 aria-[current=true]:font-bold";
+// `group` sert aux rangées d'épisode, dont aria-current est porté par le <li>.
+export const rowItemClass =
+  "group flex border-b border-rose-400 last:border-b-0";
 
-export const chapterTimeClass = "w-10 shrink-0";
+export const rowButtonClass =
+  "flex h-11 min-w-0 flex-1 items-center gap-3 px-3 text-left text-xs text-white hover:cursor-pointer hover:bg-rose-500/20 aria-[current=true]:bg-rose-500/50 aria-[current=true]:font-bold group-aria-[current=true]:bg-rose-500/50 group-aria-[current=true]:font-bold";
 
-export const chapterTitleClass = "min-w-0 flex-1";
+export const rowLeadClass = "w-12 shrink-0";
 
-export const badgeClass = "text-xs font-bold";
+export const rowTitleClass = "min-w-0 flex-1 truncate";
+
+export const listHeadingClass = "text-sm font-bold text-rose-400 uppercase";
 
 // Curseur de position. range-track / range-thumb sont des variantes déclarées
 // dans global.css (pseudo-éléments WebKit et Firefox). La progression est peinte

@@ -19,7 +19,10 @@ const MAX_FREQUENCY_HZ = 800;
 const MIN_DECIBELS = -80;
 const MAX_DECIBELS = -32;
 const MIN_BAR_HEIGHT = 1; // plancher pendant la lecture
-const MAX_BAR_HEIGHT = 22;
+// À la pause, les barres se figent puis retombent, comme l'aiguille d'un vu-mètre
+// physique, au lieu de disparaître d'un coup.
+const RELEASE_MS = 1000;
+const MAX_BAR_HEIGHT = 34; // base du vu-mètre à y = 37 (viewBox)
 // Pondération par barre : léger rattrapage vers les aigus (la voix y perd de
 // l'énergie) et cloche centrée, pour un pic visuel au milieu du vu-mètre.
 const HIGH_FREQUENCY_TILT = 1;
@@ -132,6 +135,20 @@ export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]
     }
   };
 
+  /** Retombée des barres après la pause : de leur hauteur figée jusqu'à zéro. */
+  const release = (from: number[], startedAt: number): void => {
+    const elapsed = performance.now() - startedAt;
+    const remaining = Math.max(0, 1 - elapsed / RELEASE_MS);
+
+    setHeights(from.map((height) => height * remaining));
+
+    if (remaining > 0) {
+      frameId = requestAnimationFrame(() => release(from, startedAt));
+    } else {
+      frameId = 0;
+    }
+  };
+
   const render = (): void => {
     if (!analyser || !spectrum) {
       return;
@@ -172,7 +189,13 @@ export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]
     stop: () => {
       cancelAnimationFrame(frameId);
       frameId = 0;
-      setHeights(bars.map(() => 0)); // au repos : barres à zéro, donc invisibles
+
+      const frozen = bars.map((bar) => baseline - Number(bar.getAttribute("y2") ?? baseline));
+      if (prefersReducedMotion || frozen.every((height) => height <= 0)) {
+        setHeights(bars.map(() => 0)); // au repos : barres à zéro, donc invisibles
+        return;
+      }
+      release(frozen, performance.now());
     },
   };
 }

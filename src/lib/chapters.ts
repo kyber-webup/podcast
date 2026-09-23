@@ -15,6 +15,11 @@ export function getCurrentChapterIndex(chapters: Chapter[], time: number): numbe
   return index;
 }
 
+/** Libellé du chapitre en cours affiché sous le lecteur : « CH 01 - Titre » (F-53). */
+export function formatChapterLabel(index: number, title: string): string {
+  return `CH ${String(index + 1).padStart(2, "0")} - ${title}`;
+}
+
 export function validateChapters(chapters: Chapter[], duration: number): string | null {
   if (chapters.length === 0) {
     return null;

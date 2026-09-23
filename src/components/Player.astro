@@ -1,93 +1,115 @@
 ---
 import { formatTime, toSpokenTime } from "../lib/time";
-import type { Chapter } from "../lib/chapters";
+import { formatChapterLabel, type Chapter } from "../lib/chapters";
 import { seekClass } from "../lib/classes";
 
 interface Props {
   title: string;
   hosts: string[];
+  roster: string[];
   duration: number;
   chapters: Chapter[];
   currentChapterIndex: number;
   audioSrc: string;
 }
 
-const { title, hosts, duration, chapters, currentChapterIndex, audioSrc } = Astro.props;
+const { title, hosts, roster, duration, chapters, currentChapterIndex, audioSrc } = Astro.props;
 const currentChapter = currentChapterIndex >= 0 ? chapters[currentChapterIndex] : undefined;
 const hasPrevChapter = currentChapterIndex > 0;
 const hasNextChapter = chapters.length > 0 && currentChapterIndex < chapters.length - 1;
 
+const startTime = formatTime(0, { pad: true });
+// Segments éteints de l'afficheur : le minuteur, tous chiffres à 8 (voir player.ts).
+const ghostTime = startTime.replace(/\d/g, "8");
+
 const transportButtonClass =
-  "flex flex-1 items-center justify-center text-gray-400 transition-colors hover:text-white hover:cursor-pointer disabled:pointer-events-none disabled:opacity-35";
+  "flex flex-1 items-center justify-center text-gray-400 hover:cursor-pointer transition-colors hover:text-white disabled:pointer-events-none disabled:opacity-35";
+
+const hostChipClass =
+  "min-w-12 bg-rose-400/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-rose-400";
 ---
 
 <section aria-label="Lecteur">
   <audio id="audio" preload="metadata" src={audioSrc}></audio>
 
-  <div class="flex items-start gap-3">
-    {/* Écran LCD : temps écoulé + vu-mètre */}
-    <div
-      class="flex h-18 w-38 shrink-0 flex-col justify-between rounded-xs border border-rose-500 bg-gray-900"
-    >
-      <div class="flex items-center justify-between gap-2 px-2.5 pt-2.5">
-        {/* Trois états pilotés par player.ts : arrêt (rien lancé), lecture, pause. */}
-        <span class="flex size-4 shrink-0 items-center justify-center text-rose-400">
-          <span id="screen-stop" class="flex">
-            <svg aria-hidden="true" viewBox="0 0 12 12" class="size-3" fill="none">
-              <rect width="12" height="12" fill="currentColor"></rect>
-            </svg>
-          </span>
-          <span id="screen-play" hidden class="flex">
-            <svg aria-hidden="true" viewBox="0 0 16 14" class="h-3.5 w-auto rotate-90" fill="none">
-              <path d="M8 0L16 14H0L8 0Z" fill="currentColor"></path>
-            </svg>
-          </span>
-          <span id="screen-pause" hidden class="flex">
-            <svg aria-hidden="true" viewBox="0 0 12 20" class="h-3.5 w-auto" fill="none">
-              <path d="M7.63636 0V20H12V0H7.63636Z" fill="currentColor"></path>
-              <path d="M0 0V20H4.36364V0H0Z" fill="currentColor"></path>
-            </svg>
-          </span>
-        </span>
-        <span id="time-big" class="font-counter text-[22px] leading-none font-light text-rose-400">{formatTime(0, { pad: true })}</span>
-      </div>
-
-      {/* Vu-mètre : barres collées au bas de l'écran, animées pendant la lecture
-      par src/scripts/visualizer.ts. Au repos (y2 = y1) elles sont de hauteur nulle,
-      donc invisibles. Couleur via currentColor, halo via drop-shadow-glow. */}
-      <svg
-        id="waveform"
-        aria-hidden="true"
-        viewBox="0 0 132 26"
-        preserveAspectRatio="none"
-        class="block h-6.5 w-full px-2.5 text-rose-400 drop-shadow-glow"
-        fill="none"
+  {/* Écran LCD : animateurs, minuteur, titre de l'épisode et vu-mètre. */}
+  <div class="@container flex min-h-46 flex-col rounded-xs border border-rose-400 bg-gray-900">
+    <div class="flex items-start justify-between gap-3 px-3 pt-3">
+      {/* Le nombre de colonnes suit la largeur de l'écran lui-même (@container),
+      pas celle de la fenêtre : de 2 colonnes sur les plus petits appareils à 6 en
+      pleine largeur. Les seuils gardent de la place pour un minuteur à 7 caractères
+      (« 1:00:00 »), le cas le plus large. */}
+      <ul
+        id="player-hosts"
+        aria-label="Animateurs de l'épisode"
+        class="grid grid-cols-2 gap-x-2 gap-y-1 @min-[20rem]:grid-cols-3 @min-[23rem]:grid-cols-4 @min-[26.5rem]:grid-cols-5 @min-[30rem]:grid-cols-6"
       >
-        <line x1="4.5" y1="26" x2="4.5" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="14.75" y1="26" x2="14.75" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="25" y1="26" x2="25" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="35.25" y1="26" x2="35.25" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="45.5" y1="26" x2="45.5" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="55.75" y1="26" x2="55.75" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="66" y1="26" x2="66" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="76.25" y1="26" x2="76.25" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="86.5" y1="26" x2="86.5" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="96.75" y1="26" x2="96.75" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="107" y1="26" x2="107" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="117.25" y1="26" x2="117.25" y2="26" stroke="currentColor" stroke-width="3"></line>
-        <line x1="127.5" y1="26" x2="127.5" y2="26" stroke="currentColor" stroke-width="3"></line>
-      </svg>
+        {
+          roster.map((host) => (
+            <li
+              data-host={host}
+              data-active={hosts.includes(host) ? "true" : "false"}
+              aria-hidden={hosts.includes(host) ? undefined : "true"}
+              class={hostChipClass}
+            >
+              {host}
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="relative shrink-0 font-lcd text-2xl leading-none text-rose-400">
+        <span id="time-ghost" aria-hidden="true" class="text-rose-400/25">{ghostTime}</span>
+        <span id="time-big" class="absolute inset-0">{startTime}</span>
+      </p>
     </div>
 
-    {/* Animateurs + titre de l'épisode en cours */}
-    <div class="min-w-0 -mt-1">
-      <p id="player-hosts" class="text-xs text-cyan-400 uppercase" hidden={hosts.length === 0}>
-        {hosts.join(", ")}
-      </p>
-      <p id="player-episode-title" class="mt-2 text-sm font-bold text-cyan-400">
-        {title}
-      </p>
-    </div>
+    <p
+      id="player-episode-title"
+      class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-rose-400"
+    >
+      {title}
+    </p>
+
+    {/* Vu-mètre : barres collées au bas de l'écran, animées pendant la lecture
+    par src/scripts/visualizer.ts. Au repos (y2 = y1) elles sont de hauteur nulle,
+    donc invisibles. Couleur via currentColor, halo via drop-shadow-glow.
+    En grande largeur, une barre sur deux est masquée : les restantes sont bien
+    plus larges et restent régulièrement espacées. Les barres extrêmes sont posées
+    à une demi-épaisseur maximale des bords du viewBox, pour affleurer exactement
+    le padding de l'écran une fois épaissies. */}
+    <svg
+      id="waveform"
+      aria-hidden="true"
+      viewBox="0 0 334 37"
+      preserveAspectRatio="none"
+      class="mt-auto block h-9.25 w-full px-1.5 text-rose-400 drop-shadow-glow stroke-4 sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
+      fill="none"
+    >
+      <line x1="9.00" y1="37" x2="9.00" y2="37" stroke="currentColor"></line>
+      <line x1="23.36" y1="37" x2="23.36" y2="37" stroke="currentColor"></line>
+      <line x1="37.73" y1="37" x2="37.73" y2="37" stroke="currentColor"></line>
+      <line x1="52.09" y1="37" x2="52.09" y2="37" stroke="currentColor"></line>
+      <line x1="66.45" y1="37" x2="66.45" y2="37" stroke="currentColor"></line>
+      <line x1="80.82" y1="37" x2="80.82" y2="37" stroke="currentColor"></line>
+      <line x1="95.18" y1="37" x2="95.18" y2="37" stroke="currentColor"></line>
+      <line x1="109.55" y1="37" x2="109.55" y2="37" stroke="currentColor"></line>
+      <line x1="123.91" y1="37" x2="123.91" y2="37" stroke="currentColor"></line>
+      <line x1="138.27" y1="37" x2="138.27" y2="37" stroke="currentColor"></line>
+      <line x1="152.64" y1="37" x2="152.64" y2="37" stroke="currentColor"></line>
+      <line x1="167.00" y1="37" x2="167.00" y2="37" stroke="currentColor"></line>
+      <line x1="181.36" y1="37" x2="181.36" y2="37" stroke="currentColor"></line>
+      <line x1="195.73" y1="37" x2="195.73" y2="37" stroke="currentColor"></line>
+      <line x1="210.09" y1="37" x2="210.09" y2="37" stroke="currentColor"></line>
+      <line x1="224.45" y1="37" x2="224.45" y2="37" stroke="currentColor"></line>
+      <line x1="238.82" y1="37" x2="238.82" y2="37" stroke="currentColor"></line>
+      <line x1="253.18" y1="37" x2="253.18" y2="37" stroke="currentColor"></line>
+      <line x1="267.55" y1="37" x2="267.55" y2="37" stroke="currentColor"></line>
+      <line x1="281.91" y1="37" x2="281.91" y2="37" stroke="currentColor"></line>
+      <line x1="296.27" y1="37" x2="296.27" y2="37" stroke="currentColor"></line>
+      <line x1="310.64" y1="37" x2="310.64" y2="37" stroke="currentColor"></line>
+      <line x1="325.00" y1="37" x2="325.00" y2="37" stroke="currentColor"></line>
+    </svg>
   </div>
 
   <p
@@ -106,15 +128,12 @@ const transportButtonClass =
     </button>
   </p>
 
-  <p
-        id="player-chapter-title"
-        hidden={!currentChapter}
-        class="mt-10 text-xs text-gray-400"
-      >
-        {currentChapter?.title}
-      </p>
-  <p class="text-xs mt-2 text-white">
-    <span id="time-current">{formatTime(0, { pad: true })}</span> / <span id="time-duration">{formatTime(duration, { pad: true })}</span>
+  <p id="player-chapter-title" hidden={!currentChapter} class="mt-10.5 truncate text-xs text-gray-400">
+    {currentChapter ? formatChapterLabel(currentChapterIndex, currentChapter.title) : ""}
+  </p>
+
+  <p class="mt-1 text-xs font-bold text-white">
+    <span id="time-current">{startTime}</span> / <span id="time-duration">{formatTime(duration, { pad: true })}</span>
   </p>
 
   <label for="seek" class="sr-only">Position de lecture</label>
@@ -125,12 +144,12 @@ const transportButtonClass =
     max={duration}
     step="1"
     value="0"
-    class={`mt-2 ${seekClass}`}
+    class={`mt-3 ${seekClass}`}
     aria-valuetext={`${toSpokenTime(0)} sur ${toSpokenTime(duration)}`}
   />
 
   {/* Transport : chapitre précédent, −15 s, lecture/pause, +15 s, chapitre suivant */}
-  <div class="mt-9 flex h-12 rounded-sm border border-gray-700 bg-gray-800">
+  <div class="mt-8.5 flex h-12 rounded-sm border border-gray-700 bg-gray-800">
     <button
       type="button"
       id="btn-prev-chapter"

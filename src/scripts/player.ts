@@ -1,7 +1,5 @@
 import { formatTime, toSpokenTime } from "../lib/time";
-import { getCurrentChapterIndex, type Chapter } from "../lib/chapters";
-import { getEpisodeBadge } from "../lib/badges";
-import { badgeClass, chapterButtonClass, chapterItemClass, chapterTimeClass, chapterTitleClass } from "../lib/classes";
+import { formatChapterLabel, getCurrentChapterIndex, type Chapter } from "../lib/chapters";
 import { STORAGE_KEY, parseState, updateEpisodeState, writeState, type StoredState } from "../lib/storage";
 import {
   setMediaSessionHandlers,
@@ -30,37 +28,6 @@ const RESUME_END_MARGIN_SECONDS = 5;
 const DURATION_MISMATCH_THRESHOLD_SECONDS = 2;
 const PODCAST_NAME = "DevNote";
 
-
-const buildCompletedBadge = (): HTMLElement => {
-  const p = document.createElement("p");
-  p.className = `${badgeClass} text-gray-400`;
-  p.textContent = "Épisode écouté";
-  return p;
-};
-
-const buildInProgressBadge = (percent: number): HTMLElement => {
-  const p = document.createElement("p");
-  p.className = `${badgeClass} flex items-center gap-2 text-cyan-400`;
-
-  const track = document.createElement("span");
-  track.setAttribute("aria-hidden", "true");
-  track.className = "block h-1.5 w-12 shrink-0 border border-gray-700 bg-gray-800";
-
-  const fill = document.createElement("span");
-  fill.className = "block h-full bg-cyan-400";
-  fill.style.width = `${percent}%`;
-
-  track.append(fill);
-  p.append(track, `Écouté à ${percent} %`);
-  return p;
-};
-
-const buildNewBadge = (): HTMLElement => {
-  const p = document.createElement("p");
-  p.className = `${badgeClass} text-amber-400`;
-  p.textContent = "Nouvel épisode";
-  return p;
-};
 
 function readEpisodesData(): EpisodeData[] {
   const node = document.getElementById("episodes-data");
@@ -111,23 +78,18 @@ function initPlayer(): void {
   const playIcon = document.getElementById("icon-play");
   const pauseIcon = document.getElementById("icon-pause");
   const playPauseLabel = document.getElementById("btn-play-pause-label");
-  const screenStop = document.getElementById("screen-stop");
-  const screenPlay = document.getElementById("screen-play");
-  const screenPause = document.getElementById("screen-pause");
   const backButton = document.getElementById("btn-back-15");
   const forwardButton = document.getElementById("btn-forward-15");
   const seek = document.getElementById("seek");
   const timeCurrentEl = document.getElementById("time-current");
   const timeBigEl = document.getElementById("time-big");
+  const timeGhostEl = document.getElementById("time-ghost");
   const timeDurationEl = document.getElementById("time-duration");
   const errorBox = document.getElementById("player-error");
   const retryButton = document.getElementById("btn-retry");
   const episodeTitleEl = document.getElementById("player-episode-title");
   const hostsEl = document.getElementById("player-hosts");
   const chapterTitleEl = document.getElementById("player-chapter-title");
-  const chapterNavEl = document.getElementById("chapters");
-  const chapterListEl = document.getElementById("chapter-list-items");
-  const toggleChaptersButton = document.getElementById("btn-toggle-chapters");
   const prevChapterButton = document.getElementById("btn-prev-chapter");
   const nextChapterButton = document.getElementById("btn-next-chapter");
 
@@ -137,22 +99,17 @@ function initPlayer(): void {
     !(playIcon instanceof HTMLElement) ||
     !(pauseIcon instanceof HTMLElement) ||
     !(playPauseLabel instanceof HTMLElement) ||
-    !(screenStop instanceof HTMLElement) ||
-    !(screenPlay instanceof HTMLElement) ||
-    !(screenPause instanceof HTMLElement) ||
     !(backButton instanceof HTMLElement) ||
     !(forwardButton instanceof HTMLElement) ||
     !(seek instanceof HTMLInputElement) ||
     !(timeCurrentEl instanceof HTMLElement) ||
     !(timeBigEl instanceof HTMLElement) ||
+    !(timeGhostEl instanceof HTMLElement) ||
     !(timeDurationEl instanceof HTMLElement) ||
     !(errorBox instanceof HTMLElement) ||
     !(episodeTitleEl instanceof HTMLElement) ||
     !(hostsEl instanceof HTMLElement) ||
     !(chapterTitleEl instanceof HTMLElement) ||
-    !(chapterNavEl instanceof HTMLElement) ||
-    !(chapterListEl instanceof HTMLElement) ||
-    !(toggleChaptersButton instanceof HTMLButtonElement) ||
     !(prevChapterButton instanceof HTMLButtonElement) ||
     !(nextChapterButton instanceof HTMLButtonElement)
   ) {
@@ -181,22 +138,21 @@ function initPlayer(): void {
 
   /**
    * « idle » tant que l'épisode courant n'a pas été lancé : bouton central
-   * neutre comme ses voisins, et carré d'arrêt sur l'écran.
+   * neutre comme ses voisins.
    */
   const setPlaybackState = (state: "idle" | "playing" | "paused"): void => {
     playPauseButton.dataset.state = state;
     playPauseLabel.textContent = state === "playing" ? "Pause" : "Lecture";
     playIcon.hidden = state === "playing";
     pauseIcon.hidden = state !== "playing";
-    screenStop.hidden = state !== "idle";
-    screenPlay.hidden = state !== "playing";
-    screenPause.hidden = state !== "paused";
   };
 
   const updateTimeDisplay = (position: number): void => {
     const formatted = formatTime(position, { pad: true });
     timeCurrentEl.textContent = formatted;
     timeBigEl.textContent = formatted;
+    // Segments éteints derrière le minuteur : mêmes caractères, tous à 8.
+    timeGhostEl.textContent = formatted.replace(/\d/g, "8");
     seek.setAttribute("aria-valuetext", `${toSpokenTime(position)} sur ${toSpokenTime(duration)}`);
     // Peint la portion écoutée de la piste (voir #seek dans global.css).
     const percent = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
@@ -216,51 +172,21 @@ function initPlayer(): void {
     errorBox.hidden = false;
   };
 
-  const renderChapterList = (chapters: Chapter[], currentIndex: number): void => {
-    chapterListEl.innerHTML = "";
-    chapters.forEach((chapter, index) => {
-      const li = document.createElement("li");
-      li.className = chapterItemClass;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.chapterIndex = String(index);
-      button.className = chapterButtonClass;
-      if (index === currentIndex) {
-        button.setAttribute("aria-current", "true");
-      }
-      button.setAttribute(
-        "aria-label",
-        `Aller au chapitre ${index + 1} : ${chapter.title}, à ${toSpokenTime(chapter.start)}`,
-      );
-
-      const timeSpan = document.createElement("span");
-      timeSpan.setAttribute("aria-hidden", "true");
-      timeSpan.className = chapterTimeClass;
-      timeSpan.textContent = formatTime(chapter.start, { pad: true });
-
-      const titleSpan = document.createElement("span");
-      titleSpan.className = chapterTitleClass;
-      titleSpan.textContent = chapter.title;
-
-      button.append(timeSpan, titleSpan);
-      li.append(button);
-      chapterListEl.append(li);
+  // Allume les pastilles des animateurs de l'épisode, éteint les autres.
+  const renderHosts = (hosts: string[]): void => {
+    hostsEl.querySelectorAll<HTMLElement>("[data-host]").forEach((chip) => {
+      const isHost = hosts.includes(chip.dataset.host ?? "");
+      chip.dataset.active = String(isHost);
+      chip.toggleAttribute("aria-hidden", !isHost);
     });
-  };
-
-  // Liste des chapitres repliable (repliée au chargement, voir ChapterList.astro).
-  const setChaptersExpanded = (expanded: boolean): void => {
-    toggleChaptersButton.setAttribute("aria-expanded", String(expanded));
-    chapterListEl.hidden = !expanded;
   };
 
   const renderChapterState = (chapters: Chapter[], currentIndex: number): void => {
     const hasChapters = chapters.length > 0;
-    chapterNavEl.hidden = !hasChapters;
 
     const currentChapter = currentIndex >= 0 ? chapters[currentIndex] : undefined;
     chapterTitleEl.hidden = !currentChapter;
-    chapterTitleEl.textContent = currentChapter ? `Chapitre : ${currentChapter.title}` : "";
+    chapterTitleEl.textContent = currentChapter ? formatChapterLabel(currentIndex, currentChapter.title) : "";
 
     prevChapterButton.disabled = !(currentIndex > 0);
     nextChapterButton.disabled = !(hasChapters && currentIndex < chapters.length - 1);
@@ -271,15 +197,6 @@ function initPlayer(): void {
       return; // F-52 : ne rien toucher au DOM quand le chapitre n'a pas changé
     }
     currentChapterIndex = newIndex;
-
-    chapterListEl.querySelectorAll<HTMLButtonElement>("button[data-chapter-index]").forEach((button) => {
-      if (Number(button.dataset.chapterIndex) === newIndex) {
-        button.setAttribute("aria-current", "true");
-      } else {
-        button.removeAttribute("aria-current");
-      }
-    });
-
     renderChapterState(chapters, newIndex);
   };
 
@@ -298,57 +215,9 @@ function initPlayer(): void {
     }
   };
 
-  const renderEpisodeBadge = (episode: EpisodeData): void => {
-    const li = document.querySelector<HTMLElement>(`li[data-episode-id="${episode.id}"]`);
-    const slot = li?.querySelector<HTMLElement>("[data-episode-badge-slot]");
-    if (!slot) {
-      return;
-    }
-
-    // Maquette : sur l'épisode chargé dans le lecteur, « En cours de lecture »
-    // occupe seul cet emplacement.
-    const badge =
-      currentEpisode?.id === episode.id
-        ? null
-        : getEpisodeBadge(
-            { date: new Date(episode.date), duration: episode.duration },
-            storedState.episodes[episode.id],
-            new Date(),
-          );
-
-    slot.replaceChildren();
-    if (badge?.type === "completed") {
-      slot.append(buildCompletedBadge());
-    } else if (badge?.type === "in-progress") {
-      slot.append(buildInProgressBadge(badge.percent));
-    } else if (badge?.type === "new") {
-      slot.append(buildNewBadge());
-    }
-  };
-
-  const renderToggleButton = (episode: EpisodeData): void => {
-    const button = document.querySelector<HTMLButtonElement>(
-      `.episode-toggle-completed[data-episode-id="${episode.id}"]`,
-    );
-    if (!button) {
-      return;
-    }
-    const completed = storedState.episodes[episode.id]?.completed ?? false;
-    button.textContent = completed ? "Marquer comme non écouté" : "Marquer comme écouté";
-    button.hidden = false;
-  };
-
-  const renderAllBadges = (): void => {
-    episodes.forEach((episode) => {
-      renderEpisodeBadge(episode); // F-60, F-64, F-65
-      renderToggleButton(episode);
-    });
-  };
-
   const applyStateChange = (nextState: StoredState): void => {
     storedState = nextState;
     persistState(storedState);
-    renderAllBadges();
   };
 
   const updateEpisodeListCurrent = (episodeId: string): void => {
@@ -389,7 +258,9 @@ function initPlayer(): void {
     );
   };
 
-  const loadEpisode = (episode: EpisodeData, options: { autoplay: boolean }): void => {
+  // Ne démarre jamais la lecture : sélectionner un épisode le charge à sa position
+  // sauvegardée, l'utilisateur appuie ensuite sur Lecture (décision de Simon).
+  const loadEpisode = (episode: EpisodeData): void => {
     if (currentEpisode && currentEpisode.id !== episode.id) {
       savePosition(audio.currentTime, { force: true }); // F-47
     }
@@ -398,8 +269,7 @@ function initPlayer(): void {
     duration = episode.duration;
 
     episodeTitleEl.textContent = episode.title;
-    hostsEl.textContent = episode.hosts.join(", ");
-    hostsEl.hidden = episode.hosts.length === 0;
+    renderHosts(episode.hosts);
     document.title = `${episode.title} — ${PODCAST_NAME}`;
 
     const stored = storedState.episodes[episode.id];
@@ -411,7 +281,6 @@ function initPlayer(): void {
     updateTimeDisplay(initialPosition); // F-41 : avant tout chargement audio
 
     currentChapterIndex = getCurrentChapterIndex(episode.chapters, initialPosition);
-    renderChapterList(episode.chapters, currentChapterIndex);
     renderChapterState(episode.chapters, currentChapterIndex);
 
     updateMediaSessionMetadata(episode.title); // F-71
@@ -458,10 +327,6 @@ function initPlayer(): void {
 
     history.replaceState(null, "", `?e=${episode.id}`); // F-46
     updateEpisodeListCurrent(episode.id);
-
-    if (options.autoplay) {
-      audio.play().catch(showError);
-    }
   };
 
   setMediaSessionHandlers({
@@ -601,21 +466,6 @@ function initPlayer(): void {
     audio.play().catch(showError);
   });
 
-  toggleChaptersButton.addEventListener("click", () => {
-    setChaptersExpanded(toggleChaptersButton.getAttribute("aria-expanded") !== "true");
-  });
-
-  chapterListEl.addEventListener("click", (event) => {
-    if (!currentEpisode) {
-      return;
-    }
-    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-chapter-index]");
-    if (!button) {
-      return;
-    }
-    goToChapter(currentEpisode.chapters, Number(button.dataset.chapterIndex));
-  });
-
   prevChapterButton.addEventListener("click", () => {
     if (currentEpisode) {
       goToChapter(currentEpisode.chapters, currentChapterIndex - 1);
@@ -633,38 +483,12 @@ function initPlayer(): void {
       const id = button.dataset.episodeId;
       const episode = episodes.find((candidate) => candidate.id === id);
       if (episode) {
-        loadEpisode(episode, { autoplay: true }); // F-32, F-34 (le focus reste sur ce bouton)
+        loadEpisode(episode); // F-34 : le focus reste sur ce bouton
       }
     });
   });
 
-  document.querySelectorAll<HTMLButtonElement>(".episode-toggle-completed").forEach((button) => {
-    button.addEventListener("click", () => {
-      const id = button.dataset.episodeId;
-      if (!id) {
-        return;
-      }
-      const wasCompleted = storedState.episodes[id]?.completed ?? false;
-      const nextCompleted = !wasCompleted;
-
-      applyStateChange(
-        updateEpisodeState(
-          storedState,
-          id,
-          nextCompleted ? { completed: true } : { completed: false, position: 0 }, // F-66
-          new Date(),
-        ),
-      );
-
-      if (currentEpisode?.id === id && !nextCompleted) {
-        audio.currentTime = 0;
-        seek.value = "0";
-        updateTimeDisplay(0);
-      }
-    });
-  });
-
-  loadEpisode(resolveInitialEpisode(episodes, storedState), { autoplay: false }); // F-20 : jamais autoplay
+  loadEpisode(resolveInitialEpisode(episodes, storedState)); // F-20 : jamais d'autoplay
 }
 
 if (document.readyState === "loading") {
