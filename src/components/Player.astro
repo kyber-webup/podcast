@@ -1,115 +1,33 @@
 ---
-import { formatTime, toGhostTime, toSpokenTime } from "../lib/time";
-import { formatChapterLabel, type Chapter } from "../lib/chapters";
+import { formatTime, toSpokenTime } from "../lib/time";
+import { formatChapterLabel, getCurrentChapterIndex } from "../lib/chapters";
+import type { PlayerEpisode } from "../lib/playback";
+import PlayerScreen from "./PlayerScreen.astro";
+import SkipIcon from "./SkipIcon.astro";
+import TransportButton from "./TransportButton.astro";
 
 interface Props {
-  title: string;
-  hosts: string[];
+  episode: PlayerEpisode;
   roster: string[];
-  duration: number;
-  chapters: Chapter[];
-  currentChapterIndex: number;
-  audioSrc: string;
 }
 
-const { title, hosts, roster, duration, chapters, currentChapterIndex, audioSrc } = Astro.props;
+const { episode, roster } = Astro.props;
+const { title, hosts, duration, chapters, audioSrc } = episode;
+
+// État initial avant JS : aucune lecture n'a eu lieu (F-20), le contrôleur applique
+// la position sauvegardée dès son démarrage (voir src/scripts/player.ts).
+const currentChapterIndex = getCurrentChapterIndex(chapters, 0);
 const currentChapter = currentChapterIndex >= 0 ? chapters[currentChapterIndex] : undefined;
 const hasPrevChapter = currentChapterIndex > 0;
 const hasNextChapter = chapters.length > 0 && currentChapterIndex < chapters.length - 1;
 
 const startTime = formatTime(0, { pad: true });
-const ghostTime = toGhostTime(startTime);
-
-// Le temps de l'appui, tous les boutons de transport prennent l'aspect du bouton
-// de lecture actif : aplat enfoncé en thème clair, halo interne en thème sombre.
-const transportButtonClass = [
-  "flex flex-1 items-center justify-center text-control-ink cursor-pointer transition-colors hover:text-control-ink-strong",
-  "active:bg-active-bg active:text-control-ink-strong active:inset-shadow-pressed",
-  "dark:active:inset-shadow-glow",
-  "disabled:pointer-events-none disabled:opacity-35",
-].join(" ");
 ---
 
 <section aria-label="Lecteur">
   <audio id="audio" preload="metadata" src={audioSrc}></audio>
 
-  <div class="@container flex min-h-46 flex-col rounded-xs border border-screen-edge bg-screen inset-shadow-[-2px_-2px_0_0_var(--color-screen-edge)] dark:inset-shadow-none">
-    <div class="flex items-start justify-between gap-3 px-3 pt-3">
-      {/* Le nombre de colonnes suit la largeur de l'écran lui-même (@container),
-      pas celle de la fenêtre : de 2 colonnes sur les plus petits appareils à 6 en
-      pleine largeur. Les seuils gardent de la place pour un minuteur à 7 caractères
-      (« 1:00:00 »), le cas le plus large. */}
-      <ul
-        id="player-hosts"
-        aria-label="Animateurs de l'épisode"
-        class="grid grid-cols-2 gap-x-2 gap-y-1 @min-[20rem]:grid-cols-3 @min-[23rem]:grid-cols-4 @min-[26.5rem]:grid-cols-5 @min-[30rem]:grid-cols-6"
-      >
-        {roster.map((host) => (
-          <li
-            data-host={host}
-            data-active={hosts.includes(host) ? "true" : "false"}
-            aria-hidden={hosts.includes(host) ? undefined : "true"}
-            class="min-w-12 bg-screen-ink/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-screen-ink"
-          >
-            {host}
-          </li>
-        ))}
-      </ul>
-
-      <p class="relative shrink-0 font-lcd text-2xl leading-none text-screen-ink">
-        <span id="time-ghost" aria-hidden="true" class="text-screen-ink/25">
-          {ghostTime}
-        </span>
-        <span id="time-big" class="absolute inset-0">
-          {startTime}
-        </span>
-      </p>
-    </div>
-
-    <p id="player-episode-title" class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink">
-      {title}
-    </p>
-
-    {/* Vu-mètre : barres collées au bas de l'écran, animées pendant la lecture
-    par src/scripts/visualizer.ts. Au repos (y2 = y1) elles sont de hauteur nulle,
-    donc invisibles. Couleur via currentColor, halo via drop-shadow-glow.
-    En grande largeur, une barre sur deux est masquée : les restantes sont bien
-    plus larges et restent régulièrement espacées. Les barres extrêmes sont posées
-    à une demi-épaisseur maximale des bords du viewBox, pour affleurer exactement
-    le padding de l'écran une fois épaissies. */}
-    <svg
-      id="waveform"
-      aria-hidden="true"
-      viewBox="0 0 334 37"
-      preserveAspectRatio="none"
-      class="mt-auto block h-9.25 w-full px-1.5 text-screen-ink drop-shadow-glow stroke-4 sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
-      fill="none"
-    >
-      <line x1="9.00" y1="37" x2="9.00" y2="37" stroke="currentColor"></line>
-      <line x1="23.36" y1="37" x2="23.36" y2="37" stroke="currentColor"></line>
-      <line x1="37.73" y1="37" x2="37.73" y2="37" stroke="currentColor"></line>
-      <line x1="52.09" y1="37" x2="52.09" y2="37" stroke="currentColor"></line>
-      <line x1="66.45" y1="37" x2="66.45" y2="37" stroke="currentColor"></line>
-      <line x1="80.82" y1="37" x2="80.82" y2="37" stroke="currentColor"></line>
-      <line x1="95.18" y1="37" x2="95.18" y2="37" stroke="currentColor"></line>
-      <line x1="109.55" y1="37" x2="109.55" y2="37" stroke="currentColor"></line>
-      <line x1="123.91" y1="37" x2="123.91" y2="37" stroke="currentColor"></line>
-      <line x1="138.27" y1="37" x2="138.27" y2="37" stroke="currentColor"></line>
-      <line x1="152.64" y1="37" x2="152.64" y2="37" stroke="currentColor"></line>
-      <line x1="167.00" y1="37" x2="167.00" y2="37" stroke="currentColor"></line>
-      <line x1="181.36" y1="37" x2="181.36" y2="37" stroke="currentColor"></line>
-      <line x1="195.73" y1="37" x2="195.73" y2="37" stroke="currentColor"></line>
-      <line x1="210.09" y1="37" x2="210.09" y2="37" stroke="currentColor"></line>
-      <line x1="224.45" y1="37" x2="224.45" y2="37" stroke="currentColor"></line>
-      <line x1="238.82" y1="37" x2="238.82" y2="37" stroke="currentColor"></line>
-      <line x1="253.18" y1="37" x2="253.18" y2="37" stroke="currentColor"></line>
-      <line x1="267.55" y1="37" x2="267.55" y2="37" stroke="currentColor"></line>
-      <line x1="281.91" y1="37" x2="281.91" y2="37" stroke="currentColor"></line>
-      <line x1="296.27" y1="37" x2="296.27" y2="37" stroke="currentColor"></line>
-      <line x1="310.64" y1="37" x2="310.64" y2="37" stroke="currentColor"></line>
-      <line x1="325.00" y1="37" x2="325.00" y2="37" stroke="currentColor"></line>
-    </svg>
-  </div>
+  <PlayerScreen title={title} hosts={hosts} roster={roster} />
 
   <p
     id="player-error"
@@ -165,49 +83,23 @@ const transportButtonClass = [
   />
 
   <div class="mt-8.5 flex h-12 rounded-sm border border-control-edge bg-control">
-    <button
-      type="button"
+    <TransportButton
       id="btn-prev-chapter"
       disabled={!hasPrevChapter}
       aria-label="Chapitre précédent"
-      class={`${transportButtonClass} border-r border-control-edge`}
+      class="border-r border-control-edge"
     >
-      <svg aria-hidden="true" viewBox="0 0 25 20" class="h-5 w-auto -scale-x-100" fill="none">
-        <path
-          d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"
-        ></path>
-        <path
-          d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"
-        ></path>
-        <path d="M21 0H25V20H21V0Z" fill="currentColor"></path>
-      </svg>
-    </button>
+      <SkipIcon direction="backward" withBar />
+    </TransportButton>
 
-    <button
-      type="button"
-      id="btn-back-15"
-      aria-label="Reculer de 15 secondes"
-      class={`${transportButtonClass} border-r border-control-edge`}
-    >
-      <svg aria-hidden="true" viewBox="0 0 21 20" class="h-5 w-auto -scale-x-100" fill="none">
-        <path
-          d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"
-        ></path>
-        <path
-          d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"
-        ></path>
-      </svg>
-    </button>
+    <TransportButton id="btn-back-15" aria-label="Reculer de 15 secondes" class="border-r border-control-edge">
+      <SkipIcon direction="backward" />
+    </TransportButton>
 
-    <button
-      type="button"
+    <TransportButton
       id="btn-play-pause"
       data-state="idle"
-      class={`${transportButtonClass} not-data-[state=idle]:bg-active-bg not-data-[state=idle]:text-control-ink-strong not-data-[state=idle]:inset-shadow-pressed dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:inset-shadow-none dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse`}
+      class="not-data-[state=idle]:bg-active-bg not-data-[state=idle]:text-control-ink-strong not-data-[state=idle]:inset-shadow-pressed dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:inset-shadow-none dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse"
     >
       <span id="icon-play" class="flex">
         <svg aria-hidden="true" viewBox="0 0 8 16" class="h-5 w-auto" fill="none">
@@ -226,45 +118,20 @@ const transportButtonClass = [
       <span id="btn-play-pause-label" class="sr-only">
         Lecture
       </span>
-    </button>
+    </TransportButton>
 
-    <button
-      type="button"
-      id="btn-forward-15"
-      aria-label="Avancer de 15 secondes"
-      class={`${transportButtonClass} border-l border-control-edge`}
-    >
-      <svg aria-hidden="true" viewBox="0 0 21 20" class="h-5 w-auto" fill="none">
-        <path
-          d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"
-        ></path>
-        <path
-          d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"
-        ></path>
-      </svg>
-    </button>
+    <TransportButton id="btn-forward-15" aria-label="Avancer de 15 secondes" class="border-l border-control-edge">
+      <SkipIcon direction="forward" />
+    </TransportButton>
 
-    <button
-      type="button"
+    <TransportButton
       id="btn-next-chapter"
       disabled={!hasNextChapter}
       aria-label="Chapitre suivant"
-      class={`${transportButtonClass} border-l border-control-edge`}
+      class="border-l border-control-edge"
     >
-      <svg aria-hidden="true" viewBox="0 0 25 20" class="h-5 w-auto" fill="none">
-        <path
-          d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"
-        ></path>
-        <path
-          d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"
-        ></path>
-        <path d="M21 0H25V20H21V0Z" fill="currentColor"></path>
-      </svg>
-    </button>
+      <SkipIcon direction="forward" withBar />
+    </TransportButton>
   </div>
 </section>
 

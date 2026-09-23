@@ -1,0 +1,23 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"button">;
+
+const { class: className, ...attrs } = Astro.props;
+
+// Le temps de l'appui, tous les boutons de transport prennent l'aspect du bouton
+// de lecture actif : aplat enfoncé en thème clair, halo interne en thème sombre.
+---
+
+<button
+  type="button"
+  class:list={[
+    "flex flex-1 cursor-pointer items-center justify-center text-control-ink transition-colors hover:text-control-ink-strong",
+    "active:bg-active-bg active:text-control-ink-strong active:inset-shadow-pressed dark:active:inset-shadow-glow",
+    "disabled:pointer-events-none disabled:opacity-35",
+    className,
+  ]}
+  {...attrs}
+>
+  <slot />
+</button>

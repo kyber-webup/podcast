@@ -1,0 +1,26 @@
+---
+interface Props {
+  direction: "backward" | "forward";
+  /** Barre verticale après les triangles : saut de chapitre plutôt que de 15 s. */
+  withBar?: boolean;
+}
+
+const { direction, withBar = false } = Astro.props;
+---
+
+<svg
+  aria-hidden="true"
+  viewBox={withBar ? "0 0 25 20" : "0 0 21 20"}
+  class:list={["h-5 w-auto", { "-scale-x-100": direction === "backward" }]}
+  fill="none"
+>
+  <path
+    d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
+    fill="currentColor"
+  ></path>
+  <path
+    d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
+    fill="currentColor"
+  ></path>
+  {withBar && <path d="M21 0H25V20H21V0Z" fill="currentColor"></path>}
+</svg>

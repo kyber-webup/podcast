@@ -1,0 +1,78 @@
+---
+import { formatTime, toGhostTime } from "../lib/time";
+
+interface Props {
+  title: string;
+  hosts: string[];
+  roster: string[];
+}
+
+const { title, hosts, roster } = Astro.props;
+
+const startTime = formatTime(0, { pad: true });
+
+const WAVEFORM_BAR_COUNT = 23;
+const FIRST_BAR_X = 9;
+const LAST_BAR_X = 325;
+const waveformBarPositions = Array.from({ length: WAVEFORM_BAR_COUNT }, (_, index) =>
+  (FIRST_BAR_X + (index * (LAST_BAR_X - FIRST_BAR_X)) / (WAVEFORM_BAR_COUNT - 1)).toFixed(2),
+);
+---
+
+<div class="@container flex min-h-46 flex-col rounded-xs border border-screen-edge bg-screen inset-shadow-[-2px_-2px_0_0_var(--color-screen-edge)] dark:inset-shadow-none">
+  <div class="flex items-start justify-between gap-3 px-3 pt-3">
+    {/* Le nombre de colonnes suit la largeur de l'écran lui-même (@container),
+    pas celle de la fenêtre : de 2 colonnes sur les plus petits appareils à 6 en
+    pleine largeur. Les seuils gardent de la place pour un minuteur à 7 caractères
+    (« 1:00:00 »), le cas le plus large. */}
+    <ul
+      id="player-hosts"
+      aria-label="Animateurs de l'épisode"
+      class="grid grid-cols-2 gap-x-2 gap-y-1 @min-[20rem]:grid-cols-3 @min-[23rem]:grid-cols-4 @min-[26.5rem]:grid-cols-5 @min-[30rem]:grid-cols-6"
+    >
+      {roster.map((host) => (
+        <li
+          data-host={host}
+          data-active={hosts.includes(host) ? "true" : "false"}
+          aria-hidden={hosts.includes(host) ? undefined : "true"}
+          class="min-w-12 bg-screen-ink/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-screen-ink"
+        >
+          {host}
+        </li>
+      ))}
+    </ul>
+
+    <p class="relative shrink-0 font-lcd text-2xl leading-none text-screen-ink">
+      <span id="time-ghost" aria-hidden="true" class="text-screen-ink/25">
+        {toGhostTime(startTime)}
+      </span>
+      <span id="time-big" class="absolute inset-0">
+        {startTime}
+      </span>
+    </p>
+  </div>
+
+  <p id="player-episode-title" class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink">
+    {title}
+  </p>
+
+  {/* Vu-mètre : barres collées au bas de l'écran, animées pendant la lecture
+  par src/scripts/visualizer.ts. Au repos (y2 = y1) elles sont de hauteur nulle,
+  donc invisibles. Couleur via currentColor, halo via drop-shadow-glow.
+  En grande largeur, une barre sur deux est masquée : les restantes sont bien
+  plus larges et restent régulièrement espacées. Les barres extrêmes sont posées
+  à une demi-épaisseur maximale des bords du viewBox, pour affleurer exactement
+  le padding de l'écran une fois épaissies. */}
+  <svg
+    id="waveform"
+    aria-hidden="true"
+    viewBox="0 0 334 37"
+    preserveAspectRatio="none"
+    class="mt-auto block h-9.25 w-full px-1.5 text-screen-ink drop-shadow-glow stroke-4 sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
+    fill="none"
+  >
+    {waveformBarPositions.map((x) => (
+      <line x1={x} y1="37" x2={x} y2="37" stroke="currentColor"></line>
+    ))}
+  </svg>
+</div>

@@ -4,7 +4,6 @@ import "../styles/global.css";
 import Player from "../components/Player.astro";
 import EpisodeList from "../components/EpisodeList.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
-import { getCurrentChapterIndex } from "../lib/chapters";
 import { buildRoster } from "../lib/team";
 import type { PlayerEpisode } from "../lib/playback";
 
@@ -19,13 +18,9 @@ const roster = buildRoster(episodes.flatMap((episode) => episode.data.hosts));
 // En production, la route /audio/<fichier> est servie par le Worker.
 const audioBase = import.meta.env.PUBLIC_AUDIO_BASE ?? "/audio";
 
-// État initial avant JS : aucune lecture n'a eu lieu (F-20), le contrôleur applique
-// la position sauvegardée dès son démarrage (voir src/scripts/player.ts).
-const currentChapterIndex = getCurrentChapterIndex(current.data.chapters, 0);
-
 // §5.3 : les métadonnées de tous les épisodes sont sérialisées ici, lues par le
 // contrôleur au démarrage — pas de requête réseau supplémentaire pour ces données.
-const episodesData: PlayerEpisode[] = episodes.map((episode) => ({
+const playerEpisodes: PlayerEpisode[] = episodes.map((episode) => ({
   id: episode.id,
   title: episode.data.title,
   hosts: episode.data.hosts,
@@ -62,21 +57,13 @@ const episodesData: PlayerEpisode[] = episodes.map((episode) => ({
 
     <main>
       <div class="mx-auto w-full max-w-xl px-5 pt-10.5 pb-8">
-        <Player
-          title={current.data.title}
-          hosts={current.data.hosts}
-          roster={roster}
-          duration={current.data.duration}
-          chapters={current.data.chapters}
-          currentChapterIndex={currentChapterIndex}
-          audioSrc={`${audioBase}/${current.data.file}`}
-        />
+        <Player episode={playerEpisodes[0]} roster={roster} />
 
         <EpisodeList episodes={episodes} currentId={current.id} />
       </div>
     </main>
 
-    <script type="application/json" id="episodes-data" is:inline set:html={JSON.stringify(episodesData)}></script>
+    <script type="application/json" id="episodes-data" is:inline set:html={JSON.stringify(playerEpisodes)}></script>
     <footer class="mx-auto w-full max-w-xl px-5 pb-6 text-xs text-muted">
       <p>DevNote — podcast interne de l'agence.</p>
     </footer>
