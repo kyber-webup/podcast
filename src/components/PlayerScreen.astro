@@ -26,7 +26,7 @@ const waveformBarPositions = Array.from({ length: WAVEFORM_BAR_COUNT }, (_, inde
     pleine largeur. Les seuils gardent de la place pour un minuteur à 7 caractères
     (« 1:00:00 »), le cas le plus large. */}
     <ul
-      id="player-hosts"
+      id="host-list"
       aria-label="Animateurs de l'épisode"
       class="grid grid-cols-2 gap-x-2 gap-y-1 @min-[20rem]:grid-cols-3 @min-[23rem]:grid-cols-4 @min-[26.5rem]:grid-cols-5 @min-[30rem]:grid-cols-6"
     >
@@ -43,16 +43,16 @@ const waveformBarPositions = Array.from({ length: WAVEFORM_BAR_COUNT }, (_, inde
     </ul>
 
     <p class="relative shrink-0 font-lcd text-2xl leading-none text-screen-ink">
-      <span id="time-ghost" aria-hidden="true" class="text-screen-ink/25">
+      <span id="screen-time-ghost" aria-hidden="true" class="text-screen-ink/25">
         {toGhostTime(startTime)}
       </span>
-      <span id="time-big" class="absolute inset-0">
+      <span id="screen-time" class="absolute inset-0">
         {startTime}
       </span>
     </p>
   </div>
 
-  <p id="player-episode-title" class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink">
+  <p id="episode-title" class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink">
     {title}
   </p>
 

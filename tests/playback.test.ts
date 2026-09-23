@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findInitialEpisode, getResumePosition, isCompleted } from "../src/lib/playback";
+import { findInitialEpisode, getResumePosition, getSeekKeyStep, isCompleted } from "../src/lib/playback";
 
 const episodes = [{ id: "003-latest" }, { id: "002-middle" }, { id: "001-first" }];
 
@@ -46,5 +46,25 @@ describe("isCompleted", () => {
 
   it("is false when the duration is unknown", () => {
     expect(isCompleted(10, 0)).toBe(false);
+  });
+});
+
+describe("getSeekKeyStep", () => {
+  it("moves 5 seconds with the arrow keys", () => {
+    expect(getSeekKeyStep("ArrowLeft")).toBe(-5);
+    expect(getSeekKeyStep("ArrowDown")).toBe(-5);
+    expect(getSeekKeyStep("ArrowRight")).toBe(5);
+    expect(getSeekKeyStep("ArrowUp")).toBe(5);
+  });
+
+  it("moves 60 seconds with Page Up / Page Down", () => {
+    expect(getSeekKeyStep("PageDown")).toBe(-60);
+    expect(getSeekKeyStep("PageUp")).toBe(60);
+  });
+
+  it("leaves Home, End and other keys to the browser", () => {
+    expect(getSeekKeyStep("Home")).toBeNull();
+    expect(getSeekKeyStep("End")).toBeNull();
+    expect(getSeekKeyStep("a")).toBeNull();
   });
 });

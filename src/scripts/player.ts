@@ -1,98 +1,59 @@
 import { formatTime, toGhostTime, toSpokenTime } from "../lib/time";
 import { formatChapterLabel, getCurrentChapterIndex, type Chapter } from "../lib/chapters";
-import { findInitialEpisode, getResumePosition, isCompleted, type PlayerEpisode } from "../lib/playback";
-import { STORAGE_KEY, parseState, updateEpisodeState, writeState, type StoredState } from "../lib/storage";
+import {
+  findInitialEpisode,
+  getResumePosition,
+  getSeekKeyStep,
+  isCompleted,
+  type PlayerEpisode,
+} from "../lib/playback";
+import { updateEpisodeState, type StoredState } from "../lib/storage";
 import {
   setMediaSessionHandlers,
   setMediaSessionChapterHandlers,
   updateMediaSessionMetadata,
   updateMediaSessionPositionState,
 } from "./media-session";
+import { getPlayerElements } from "./player-elements";
+import { readEpisodes, readStoredState, writeStoredState } from "./player-data";
 import { createVisualizer } from "./visualizer";
 
-const SMALL_SEEK_STEP_SECONDS = 5;
-const LARGE_SEEK_STEP_SECONDS = 60;
 const SKIP_SECONDS = 15;
 const SAVE_THROTTLE_MS = 5000;
 const DURATION_MISMATCH_THRESHOLD_SECONDS = 2;
 const PODCAST_NAME = "DevNote";
 
-function readEpisodesData(): PlayerEpisode[] {
-  const node = document.getElementById("episodes-data");
-  if (!node?.textContent) {
-    return [];
-  }
-  try {
-    const data: unknown = JSON.parse(node.textContent);
-    return Array.isArray(data) ? (data as PlayerEpisode[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function readStoredState(): StoredState {
-  try {
-    return parseState(localStorage.getItem(STORAGE_KEY));
-  } catch {
-    return parseState(null);
-  }
-}
-
-function persistState(state: StoredState): void {
-  writeState(state, (key, value) => localStorage.setItem(key, value));
-}
-
 function initPlayer(): void {
-  const audio = document.getElementById("audio");
-  const playPauseButton = document.getElementById("btn-play-pause");
-  const playIcon = document.getElementById("icon-play");
-  const pauseIcon = document.getElementById("icon-pause");
-  const playPauseLabel = document.getElementById("btn-play-pause-label");
-  const backButton = document.getElementById("btn-back-15");
-  const forwardButton = document.getElementById("btn-forward-15");
-  const seek = document.getElementById("seek");
-  const timeCurrentEl = document.getElementById("time-current");
-  const timeBigEl = document.getElementById("time-big");
-  const timeGhostEl = document.getElementById("time-ghost");
-  const timeDurationEl = document.getElementById("time-duration");
-  const errorBox = document.getElementById("player-error");
-  const retryButton = document.getElementById("btn-retry");
-  const episodeTitleEl = document.getElementById("player-episode-title");
-  const hostsEl = document.getElementById("player-hosts");
-  const chapterTitleEl = document.getElementById("player-chapter-title");
-  const prevChapterButton = document.getElementById("btn-prev-chapter");
-  const nextChapterButton = document.getElementById("btn-next-chapter");
+  const {
+    audio,
+    playPauseButton,
+    playIcon,
+    pauseIcon,
+    playPauseLabel,
+    skipBackButton,
+    skipForwardButton,
+    previousChapterButton,
+    nextChapterButton,
+    seekBar,
+    elapsedTime,
+    totalDuration,
+    screenTime,
+    screenTimeGhost,
+    episodeTitle,
+    hostList,
+    chapterTitle,
+    errorMessage,
+    retryButton,
+    waveformBars,
+    episodeRows,
+    episodeButtons,
+  } = getPlayerElements();
 
-  if (
-    !(audio instanceof HTMLAudioElement) ||
-    !(playPauseButton instanceof HTMLElement) ||
-    !(playIcon instanceof HTMLElement) ||
-    !(pauseIcon instanceof HTMLElement) ||
-    !(playPauseLabel instanceof HTMLElement) ||
-    !(backButton instanceof HTMLElement) ||
-    !(forwardButton instanceof HTMLElement) ||
-    !(seek instanceof HTMLInputElement) ||
-    !(timeCurrentEl instanceof HTMLElement) ||
-    !(timeBigEl instanceof HTMLElement) ||
-    !(timeGhostEl instanceof HTMLElement) ||
-    !(timeDurationEl instanceof HTMLElement) ||
-    !(errorBox instanceof HTMLElement) ||
-    !(retryButton instanceof HTMLButtonElement) ||
-    !(episodeTitleEl instanceof HTMLElement) ||
-    !(hostsEl instanceof HTMLElement) ||
-    !(chapterTitleEl instanceof HTMLElement) ||
-    !(prevChapterButton instanceof HTMLButtonElement) ||
-    !(nextChapterButton instanceof HTMLButtonElement)
-  ) {
-    return;
-  }
-
-  const episodes = readEpisodesData();
+  const episodes = readEpisodes();
   if (episodes.length === 0) {
     return;
   }
 
-  const waveformBars = Array.from(document.querySelectorAll<SVGLineElement>("#waveform line"));
   const visualizer = createVisualizer(audio, waveformBars);
 
   let storedState = readStoredState();
@@ -105,10 +66,7 @@ function initPlayer(): void {
   let hasStartedCurrentEpisode = false;
   let currentChapterIndex = -1;
 
-  /**
-   * « idle » tant que l'épisode courant n'a pas été lancé : bouton central
-   * neutre comme ses voisins.
-   */
+  /** « idle » tant que l'épisode courant n'a pas été lancé : bouton central neutre comme ses voisins. */
   const setPlaybackState = (state: "idle" | "playing" | "paused"): void => {
     playPauseButton.dataset.state = state;
     playPauseLabel.textContent = state === "playing" ? "Pause" : "Lecture";
@@ -118,13 +76,12 @@ function initPlayer(): void {
 
   const updateTimeDisplay = (position: number): void => {
     const formatted = formatTime(position, { pad: true });
-    timeCurrentEl.textContent = formatted;
-    timeBigEl.textContent = formatted;
-    timeGhostEl.textContent = toGhostTime(formatted);
-    seek.setAttribute("aria-valuetext", `${toSpokenTime(position)} sur ${toSpokenTime(duration)}`);
-    // Peint la portion écoutée de la piste (voir #seek dans global.css).
+    elapsedTime.textContent = formatted;
+    screenTime.textContent = formatted;
+    screenTimeGhost.textContent = toGhostTime(formatted);
+    seekBar.setAttribute("aria-valuetext", `${toSpokenTime(position)} sur ${toSpokenTime(duration)}`);
     const percent = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
-    seek.style.setProperty("--seek-progress", `${percent}%`);
+    seekBar.style.setProperty("--seek-progress", `${percent}%`);
   };
 
   const clampToDuration = (seconds: number): number => {
@@ -133,15 +90,20 @@ function initPlayer(): void {
   };
 
   const hideError = (): void => {
-    errorBox.hidden = true;
+    errorMessage.hidden = true;
   };
 
   const showError = (): void => {
-    errorBox.hidden = false;
+    errorMessage.hidden = false;
+  };
+
+  const play = (): void => {
+    hideError();
+    audio.play().catch(showError);
   };
 
   const renderHosts = (hosts: string[]): void => {
-    hostsEl.querySelectorAll<HTMLElement>("[data-host]").forEach((chip) => {
+    hostList.querySelectorAll<HTMLElement>("[data-host]").forEach((chip) => {
       const isHost = hosts.includes(chip.dataset.host ?? "");
       chip.dataset.active = String(isHost);
       chip.toggleAttribute("aria-hidden", !isHost);
@@ -149,14 +111,12 @@ function initPlayer(): void {
   };
 
   const renderChapterState = (chapters: Chapter[], currentIndex: number): void => {
-    const hasChapters = chapters.length > 0;
-
     const currentChapter = currentIndex >= 0 ? chapters[currentIndex] : undefined;
-    chapterTitleEl.hidden = !currentChapter;
-    chapterTitleEl.textContent = currentChapter ? formatChapterLabel(currentIndex, currentChapter.title) : "";
+    chapterTitle.hidden = !currentChapter;
+    chapterTitle.textContent = currentChapter ? formatChapterLabel(currentIndex, currentChapter.title) : "";
 
-    prevChapterButton.disabled = !(currentIndex > 0);
-    nextChapterButton.disabled = !(hasChapters && currentIndex < chapters.length - 1);
+    previousChapterButton.disabled = currentIndex <= 0;
+    nextChapterButton.disabled = currentIndex >= chapters.length - 1;
   };
 
   const setActiveChapter = (chapters: Chapter[], newIndex: number): void => {
@@ -174,7 +134,7 @@ function initPlayer(): void {
     }
     const wasPlaying = !audio.paused;
     audio.currentTime = chapter.start; // F-51
-    seek.value = String(Math.round(chapter.start));
+    seekBar.value = String(Math.round(chapter.start));
     updateTimeDisplay(chapter.start);
     setActiveChapter(chapters, index);
     if (wasPlaying) {
@@ -182,13 +142,14 @@ function initPlayer(): void {
     }
   };
 
-  const applyStateChange = (nextState: StoredState): void => {
+  /** Seul point d'écriture de l'état sauvegardé : en mémoire et dans localStorage. */
+  const saveState = (nextState: StoredState): void => {
     storedState = nextState;
-    persistState(storedState);
+    writeStoredState(storedState);
   };
 
-  const updateEpisodeListCurrent = (episodeId: string): void => {
-    document.querySelectorAll<HTMLLIElement>("li[data-episode-id]").forEach((row) => {
+  const markCurrentEpisodeRow = (episodeId: string): void => {
+    episodeRows.forEach((row) => {
       if (row.dataset.episodeId === episodeId) {
         row.setAttribute("aria-current", "true");
       } else {
@@ -207,7 +168,7 @@ function initPlayer(): void {
     }
     lastSaveTime = now;
 
-    applyStateChange(
+    saveState(
       updateEpisodeState(
         storedState,
         currentEpisode.id,
@@ -215,6 +176,12 @@ function initPlayer(): void {
         new Date(),
       ),
     );
+  };
+
+  const setDisplayedDuration = (seconds: number): void => {
+    duration = seconds;
+    seekBar.max = String(Math.round(duration));
+    totalDuration.textContent = formatTime(duration, { pad: true });
   };
 
   // Ne démarre jamais la lecture : sélectionner un épisode le charge à sa position
@@ -225,18 +192,16 @@ function initPlayer(): void {
     }
 
     currentEpisode = episode;
-    duration = episode.duration;
 
-    episodeTitleEl.textContent = episode.title;
+    episodeTitle.textContent = episode.title;
     renderHosts(episode.hosts);
     document.title = `${episode.title} — ${PODCAST_NAME}`;
 
     const stored = storedState.episodes[episode.id];
-    const initialPosition = getResumePosition(stored?.position ?? 0, duration, stored?.completed ?? false);
+    const initialPosition = getResumePosition(stored?.position ?? 0, episode.duration, stored?.completed ?? false);
 
-    seek.max = String(Math.round(duration));
-    seek.value = String(Math.round(initialPosition));
-    timeDurationEl.textContent = formatTime(duration, { pad: true });
+    setDisplayedDuration(episode.duration);
+    seekBar.value = String(Math.round(initialPosition));
     updateTimeDisplay(initialPosition); // F-41 : avant tout chargement audio
 
     currentChapterIndex = getCurrentChapterIndex(episode.chapters, initialPosition);
@@ -267,9 +232,7 @@ function initPlayer(): void {
             console.warn(
               `Durée réelle différente de la durée déclarée pour "${episode.audioSrc}" : ${duration}s déclarées, ${Math.round(audio.duration)}s réelles.`,
             );
-            duration = audio.duration;
-            seek.max = String(Math.round(duration));
-            timeDurationEl.textContent = formatTime(duration, { pad: true });
+            setDisplayedDuration(audio.duration); // F-48
           }
         }
         audio.currentTime = initialPosition; // F-42
@@ -280,7 +243,7 @@ function initPlayer(): void {
     );
     audio.load();
 
-    applyStateChange(
+    saveState(
       updateEpisodeState(
         storedState,
         episode.id,
@@ -290,14 +253,11 @@ function initPlayer(): void {
     );
 
     history.replaceState(null, "", `?e=${episode.id}`); // F-46
-    updateEpisodeListCurrent(episode.id);
+    markCurrentEpisodeRow(episode.id);
   };
 
   setMediaSessionHandlers({
-    onPlay: () => {
-      hideError();
-      audio.play().catch(showError);
-    },
+    onPlay: play,
     onPause: () => audio.pause(),
     onSeekBackward: (offset) => {
       audio.currentTime = clampToDuration(audio.currentTime - offset);
@@ -334,7 +294,7 @@ function initPlayer(): void {
     if (isSeeking || !currentEpisode) {
       return;
     }
-    seek.value = String(Math.round(audio.currentTime));
+    seekBar.value = String(Math.round(audio.currentTime));
     updateTimeDisplay(audio.currentTime);
     setActiveChapter(currentEpisode.chapters, getCurrentChapterIndex(currentEpisode.chapters, audio.currentTime));
     if (!audio.paused) {
@@ -346,10 +306,10 @@ function initPlayer(): void {
     if (!currentEpisode) {
       return;
     }
-    applyStateChange(updateEpisodeState(storedState, currentEpisode.id, { position: 0, completed: true }, new Date())); // F-44
+    saveState(updateEpisodeState(storedState, currentEpisode.id, { position: 0, completed: true }, new Date())); // F-44
     hasStartedCurrentEpisode = false;
     setPlaybackState("idle");
-    seek.value = "0";
+    seekBar.value = "0";
     updateTimeDisplay(0);
   });
 
@@ -369,59 +329,42 @@ function initPlayer(): void {
 
   playPauseButton.addEventListener("click", () => {
     if (audio.paused) {
-      hideError();
-      audio.play().catch(showError);
+      play();
     } else {
       audio.pause();
     }
   });
 
-  backButton.addEventListener("click", () => {
+  skipBackButton.addEventListener("click", () => {
     audio.currentTime = clampToDuration(audio.currentTime - SKIP_SECONDS);
   });
 
-  forwardButton.addEventListener("click", () => {
+  skipForwardButton.addEventListener("click", () => {
     audio.currentTime = clampToDuration(audio.currentTime + SKIP_SECONDS);
   });
 
-  seek.addEventListener("input", () => {
+  seekBar.addEventListener("input", () => {
     isSeeking = true;
-    updateTimeDisplay(Number(seek.value));
+    updateTimeDisplay(Number(seekBar.value));
   });
 
-  seek.addEventListener("change", () => {
+  seekBar.addEventListener("change", () => {
     isSeeking = false;
-    audio.currentTime = Number(seek.value);
+    audio.currentTime = Number(seekBar.value);
   });
 
-  seek.addEventListener("keydown", (event) => {
-    let delta = 0;
-    switch (event.key) {
-      case "ArrowLeft":
-      case "ArrowDown":
-        delta = -SMALL_SEEK_STEP_SECONDS;
-        break;
-      case "ArrowRight":
-      case "ArrowUp":
-        delta = SMALL_SEEK_STEP_SECONDS;
-        break;
-      case "PageDown":
-        delta = -LARGE_SEEK_STEP_SECONDS;
-        break;
-      case "PageUp":
-        delta = LARGE_SEEK_STEP_SECONDS;
-        break;
-      default:
-        // Home / End gardent leur comportement natif (0 / durée).
-        return;
+  seekBar.addEventListener("keydown", (event) => {
+    const step = getSeekKeyStep(event.key);
+    if (step === null) {
+      return;
     }
 
     event.preventDefault();
-    const next = clampToDuration(Number(seek.value) + delta);
-    seek.value = String(next);
+    const position = clampToDuration(Number(seekBar.value) + step);
+    seekBar.value = String(position);
     isSeeking = false;
-    updateTimeDisplay(next);
-    audio.currentTime = next;
+    updateTimeDisplay(position);
+    audio.currentTime = position;
   });
 
   retryButton.addEventListener("click", () => {
@@ -430,7 +373,7 @@ function initPlayer(): void {
     audio.play().catch(showError);
   });
 
-  prevChapterButton.addEventListener("click", () => {
+  previousChapterButton.addEventListener("click", () => {
     if (currentEpisode) {
       goToChapter(currentEpisode.chapters, currentChapterIndex - 1);
     }
@@ -442,10 +385,9 @@ function initPlayer(): void {
     }
   });
 
-  document.querySelectorAll<HTMLElement>(".episode-play-button").forEach((button) => {
+  episodeButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      const id = button.dataset.episodeId;
-      const episode = episodes.find((candidate) => candidate.id === id);
+      const episode = episodes.find((candidate) => candidate.id === button.dataset.episodeId);
       if (episode) {
         loadEpisode(episode); // F-34 : le focus reste sur ce bouton
       }

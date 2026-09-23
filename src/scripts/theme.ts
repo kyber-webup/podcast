@@ -47,7 +47,7 @@ const applyTheme = (theme: Theme): void => {
 };
 
 function initThemeToggle(): void {
-  const button = document.getElementById("btn-theme");
+  const button = document.getElementById("theme-toggle");
   if (!(button instanceof HTMLButtonElement)) {
     return;
   }

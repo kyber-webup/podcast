@@ -12,7 +12,7 @@ export type MediaSessionHandlers = {
 export type ChapterHandlers = {
   onPrevious: () => void;
   onNext: () => void;
-} | null;
+};
 
 function isMediaSessionSupported(): boolean {
   return "mediaSession" in navigator; // F-70
@@ -39,7 +39,7 @@ export function setMediaSessionHandlers(handlers: MediaSessionHandlers): void {
   });
 }
 
-export function setMediaSessionChapterHandlers(handlers: ChapterHandlers): void {
+export function setMediaSessionChapterHandlers(handlers: ChapterHandlers | null): void {
   if (!isMediaSessionSupported()) {
     return;
   }

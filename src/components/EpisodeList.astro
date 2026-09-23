@@ -48,7 +48,7 @@ function episodeCode(id: string): string | undefined {
           <button
             type="button"
             data-episode-id={episode.id}
-            class="episode-play-button flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 text-left text-xs text-ink hover:bg-row-current/50 group-aria-[current=true]:bg-row-current group-aria-[current=true]:font-bold"
+            class="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 text-left text-xs text-ink hover:bg-row-current/50 group-aria-[current=true]:bg-row-current group-aria-[current=true]:font-bold"
             aria-label={`Écouter : ${episode.data.title}`}
           >
             {code && <span class="w-12 shrink-0">{code}</span>}
