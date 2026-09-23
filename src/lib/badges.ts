@@ -2,11 +2,7 @@ export const NEW_EPISODE_DAYS = 15;
 const IN_PROGRESS_THRESHOLD_SECONDS = 10;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-export type EpisodeBadge =
-  | { type: "completed" }
-  | { type: "in-progress"; percent: number }
-  | { type: "new" }
-  | null;
+export type EpisodeBadge = { type: "completed" } | { type: "in-progress"; percent: number } | { type: "new" } | null;
 
 export type BadgeEpisodeInfo = {
   date: Date;
@@ -29,8 +25,7 @@ export function getEpisodeBadge(
   }
 
   if (stored && stored.position >= IN_PROGRESS_THRESHOLD_SECONDS) {
-    const percent =
-      episode.duration > 0 ? Math.min(100, Math.round((stored.position / episode.duration) * 100)) : 0;
+    const percent = episode.duration > 0 ? Math.min(100, Math.round((stored.position / episode.duration) * 100)) : 0;
     return { type: "in-progress", percent };
   }
 

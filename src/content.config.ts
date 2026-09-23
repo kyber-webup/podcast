@@ -23,9 +23,7 @@ const episodes = defineCollection({
       title: z.string().min(1),
       date: z.coerce.date(),
       duration: timecodeSchema.refine((value) => value > 0, "duration must be > 0"),
-      file: z
-        .string()
-        .regex(/^[a-z0-9][a-z0-9-]*\.mp3$/, "file must match ^[a-z0-9][a-z0-9-]*\\.mp3$"),
+      file: z.string().regex(/^[a-z0-9][a-z0-9-]*\.mp3$/, "file must match ^[a-z0-9][a-z0-9-]*\\.mp3$"),
       description: z.string().optional(),
       hosts: z.array(z.string()).default([]),
       chapters: z

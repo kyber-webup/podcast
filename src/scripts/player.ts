@@ -28,7 +28,6 @@ const RESUME_END_MARGIN_SECONDS = 5;
 const DURATION_MISMATCH_THRESHOLD_SECONDS = 2;
 const PODCAST_NAME = "DevNote";
 
-
 function readEpisodesData(): EpisodeData[] {
   const node = document.getElementById("episodes-data");
   if (!node?.textContent) {
@@ -121,9 +120,7 @@ function initPlayer(): void {
     return;
   }
 
-  const waveformBars = Array.from(
-    document.querySelectorAll<SVGLineElement>("#waveform line"),
-  );
+  const waveformBars = Array.from(document.querySelectorAll<SVGLineElement>("#waveform line"));
   const visualizer = createVisualizer(audio, waveformBars);
 
   let storedState = readStoredState();
@@ -322,7 +319,12 @@ function initPlayer(): void {
     audio.load();
 
     applyStateChange(
-      updateEpisodeState(storedState, episode.id, { openedAt: stored?.openedAt ?? new Date().toISOString() }, new Date()),
+      updateEpisodeState(
+        storedState,
+        episode.id,
+        { openedAt: stored?.openedAt ?? new Date().toISOString() },
+        new Date(),
+      ),
     );
 
     history.replaceState(null, "", `?e=${episode.id}`); // F-46

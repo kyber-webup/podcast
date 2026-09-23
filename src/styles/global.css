@@ -36,8 +36,7 @@
  * palette non utilisée par une classe n'est pas publiée sur :root).
  */
 @theme {
-  --font-mono:
-    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   --font-counter: "Bitcount Grid Single", var(--font-mono);
   /* minuteur de l'écran */
   --font-lcd: "DSEG7 Modern", var(--font-counter);
@@ -82,7 +81,10 @@
   --color-surface: light-dark(#ffffff, oklch(27.8% 0.033 256.848));
   --color-surface-edge: light-dark(#000000, oklch(71.2% 0.194 13.428));
   --color-row-edge: light-dark(#d2cbc7, oklch(71.2% 0.194 13.428));
-  --color-row-current: light-dark(#ffdecc, color-mix(in oklab, oklch(64.5% 0.246 16.439) 50%, oklch(27.8% 0.033 256.848)));
+  --color-row-current: light-dark(
+    #ffdecc,
+    color-mix(in oklab, oklch(64.5% 0.246 16.439) 50%, oklch(27.8% 0.033 256.848))
+  );
   /* rose-500 sur gray-800 */
   --color-heading: light-dark(#000000, transparent);
   --color-heading-ink: light-dark(#ffffff, oklch(71.2% 0.194 13.428));
@@ -100,7 +102,6 @@
   --animate-glow-pulse: glow-pulse 1.8s ease-in-out infinite;
 
   @keyframes glow-pulse {
-
     0%,
     100% {
       box-shadow: var(--inset-shadow-glow);
@@ -151,7 +152,6 @@
 }
 
 @layer base {
-
   /* Sans choix explicite, light-dark() suit le réglage du système. */
   :root {
     color-scheme: light dark;
@@ -171,7 +171,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {

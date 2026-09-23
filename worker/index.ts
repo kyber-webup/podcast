@@ -101,7 +101,10 @@ function parseRangeHeader(header: string | null, size: number): R2Range | undefi
 
 async function handleAudio(request: Request, env: Env, key: string): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
-    return new Response("Method Not Allowed", { status: 405, headers: withSecurityHeaders(new Headers({ Allow: "GET, HEAD" })) }); // A-01
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: withSecurityHeaders(new Headers({ Allow: "GET, HEAD" })),
+    }); // A-01
   }
 
   if (!AUDIO_KEY_PATTERN.test(key)) {

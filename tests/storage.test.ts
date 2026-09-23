@@ -64,7 +64,12 @@ describe("updateEpisodeState", () => {
       version: 1,
       lastEpisodeId: "001-episode",
       episodes: {
-        "001-episode": { position: 10, completed: false, openedAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z" },
+        "001-episode": {
+          position: 10,
+          completed: false,
+          openedAt: "2026-09-01T00:00:00.000Z",
+          updatedAt: "2026-09-01T00:00:00.000Z",
+        },
       },
     };
     const now = new Date("2026-09-16T12:00:00.000Z");

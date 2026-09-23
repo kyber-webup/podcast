@@ -3,12 +3,10 @@
 // définition garantit un rendu identique. Tailwind détecte les classes ici.
 
 // Listes des chapitres et des épisodes : même gabarit de rangée (maquette 23:2).
-export const listBoxClass =
-  "overflow-hidden rounded-xs border border-surface-edge bg-surface dark:inset-shadow-sm";
+export const listBoxClass = "overflow-hidden rounded-xs border border-surface-edge bg-surface dark:inset-shadow-sm";
 
 // `group` sert aux rangées d'épisode, dont aria-current est porté par le <li>.
-export const rowItemClass =
-  "group flex border-b border-row-edge last:border-b-0";
+export const rowItemClass = "group flex border-b border-row-edge last:border-b-0";
 
 export const rowButtonClass =
   "flex h-11 min-w-0 flex-1 items-center gap-3 px-3 text-left text-xs text-ink hover:cursor-pointer hover:bg-row-current/50 aria-[current=true]:bg-row-current aria-[current=true]:font-bold group-aria-[current=true]:bg-row-current group-aria-[current=true]:font-bold";

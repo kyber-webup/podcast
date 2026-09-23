@@ -11,7 +11,9 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
-    "check:worker": "tsc --noEmit -p worker/tsconfig.json"
+    "check:worker": "tsc --noEmit -p worker/tsconfig.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
@@ -25,6 +27,9 @@
     "esbuild": true
   },
   "devDependencies": {
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.0.1",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "vitest": "^5.0.1",
     "wrangler": "^4.132.0"
   }

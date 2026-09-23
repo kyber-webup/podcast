@@ -47,8 +47,7 @@ function getAudioContextConstructor(): AudioContextConstructor | undefined {
  */
 function buildBinRanges(barCount: number, binCount: number, sampleRate: number): Array<[number, number]> {
   const binWidth = sampleRate / (binCount * 2);
-  const toBin = (frequency: number) =>
-    Math.min(binCount - 1, Math.max(0, Math.round(frequency / binWidth)));
+  const toBin = (frequency: number) => Math.min(binCount - 1, Math.max(0, Math.round(frequency / binWidth)));
   const ratio = MAX_FREQUENCY_HZ / MIN_FREQUENCY_HZ;
 
   const ranges: Array<[number, number]> = [];
@@ -78,8 +77,7 @@ function buildGains(barCount: number): number[] {
 export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]): Visualizer {
   const baseline = Number(bars[0]?.getAttribute("y1") ?? 0);
   const gains = buildGains(bars.length);
-  const prefersReducedMotion =
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
   let analyser: AnalyserNode | undefined;
   let spectrum: Uint8Array<ArrayBuffer> | undefined;

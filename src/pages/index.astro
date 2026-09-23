@@ -7,9 +7,7 @@ import ThemeToggle from "../components/ThemeToggle.astro";
 import { getCurrentChapterIndex } from "../lib/chapters";
 import { buildRoster } from "../lib/team";
 
-const episodes = (await getCollection("episodes")).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
-);
+const episodes = (await getCollection("episodes")).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 const current = episodes[0];
 
 // Maquette : l'écran affiche toute l'équipe, seuls les animateurs de l'épisode
@@ -38,49 +36,48 @@ const episodesData = episodes.map((episode) => ({
 ---
 
 <html lang="fr">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="theme-color" content="#ffeee5" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#101828" media="(prefers-color-scheme: dark)" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{current.data.title} — DevNote</title>
-	</head>
-	<body class="min-h-screen bg-page font-mono text-ink">
-		<a
-			href="#episode-list"
-			class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-active focus:px-4 focus:py-2 focus:text-page"
-		>Aller à la liste des épisodes</a>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#ffeee5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#101828" media="(prefers-color-scheme: dark)" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{current.data.title} — DevNote</title>
+  </head>
+  <body class="min-h-screen bg-page font-mono text-ink">
+    <a
+      href="#episode-list"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-active focus:px-4 focus:py-2 focus:text-page"
+    >
+      Aller à la liste des épisodes
+    </a>
 
-		<header
-			class="relative flex h-10 items-center justify-center border-b border-header-edge bg-header"
-		>
-			<h1 class="text-sm font-bold text-header-ink">DevNote player</h1>
-			<ThemeToggle />
-		</header>
+    <header class="relative flex h-10 items-center justify-center border-b border-header-edge bg-header">
+      <h1 class="text-sm font-bold text-header-ink">DevNote player</h1>
+      <ThemeToggle />
+    </header>
 
-		<main>
-			<div class="mx-auto w-full max-w-xl px-5 pt-10.5 pb-8">
-				<Player
-					title={current.data.title}
-					hosts={current.data.hosts}
-					roster={roster}
-					duration={current.data.duration}
-					chapters={current.data.chapters}
-					currentChapterIndex={currentChapterIndex}
-					audioSrc={`${audioBase}/${current.data.file}`}
-				/>
+    <main>
+      <div class="mx-auto w-full max-w-xl px-5 pt-10.5 pb-8">
+        <Player
+          title={current.data.title}
+          hosts={current.data.hosts}
+          roster={roster}
+          duration={current.data.duration}
+          chapters={current.data.chapters}
+          currentChapterIndex={currentChapterIndex}
+          audioSrc={`${audioBase}/${current.data.file}`}
+        />
 
-				<EpisodeList episodes={episodes} currentId={current.id} />
-			</div>
-		</main>
+        <EpisodeList episodes={episodes} currentId={current.id} />
+      </div>
+    </main>
 
-		<script type="application/json" id="episodes-data" is:inline set:html={JSON.stringify(episodesData)} />
-
-		<footer class="mx-auto w-full max-w-xl px-5 pb-6 text-xs text-muted">
-			<p>DevNote — podcast interne de l'agence.</p>
-		</footer>
-	</body>
+    <script type="application/json" id="episodes-data" is:inline set:html={JSON.stringify(episodesData)}></script>
+    <footer class="mx-auto w-full max-w-xl px-5 pb-6 text-xs text-muted">
+      <p>DevNote — podcast interne de l'agence.</p>
+    </footer>
+  </body>
 </html>

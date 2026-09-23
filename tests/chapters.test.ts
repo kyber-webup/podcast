@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatChapterLabel,
-  getCurrentChapterIndex,
-  validateChapters,
-  type Chapter,
-} from "../src/lib/chapters";
+import { formatChapterLabel, getCurrentChapterIndex, validateChapters, type Chapter } from "../src/lib/chapters";
 
 const chapters: Chapter[] = [
   { start: 0, title: "Introduction" },

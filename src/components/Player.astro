@@ -50,30 +50,29 @@ const hostChipClass =
         aria-label="Animateurs de l'épisode"
         class="grid grid-cols-2 gap-x-2 gap-y-1 @min-[20rem]:grid-cols-3 @min-[23rem]:grid-cols-4 @min-[26.5rem]:grid-cols-5 @min-[30rem]:grid-cols-6"
       >
-        {
-          roster.map((host) => (
-            <li
-              data-host={host}
-              data-active={hosts.includes(host) ? "true" : "false"}
-              aria-hidden={hosts.includes(host) ? undefined : "true"}
-              class={hostChipClass}
-            >
-              {host}
-            </li>
-          ))
-        }
+        {roster.map((host) => (
+          <li
+            data-host={host}
+            data-active={hosts.includes(host) ? "true" : "false"}
+            aria-hidden={hosts.includes(host) ? undefined : "true"}
+            class={hostChipClass}
+          >
+            {host}
+          </li>
+        ))}
       </ul>
 
       <p class="relative shrink-0 font-lcd text-2xl leading-none text-screen-ink">
-        <span id="time-ghost" aria-hidden="true" class="text-screen-ink/25">{ghostTime}</span>
-        <span id="time-big" class="absolute inset-0">{startTime}</span>
+        <span id="time-ghost" aria-hidden="true" class="text-screen-ink/25">
+          {ghostTime}
+        </span>
+        <span id="time-big" class="absolute inset-0">
+          {startTime}
+        </span>
       </p>
     </div>
 
-    <p
-      id="player-episode-title"
-      class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink"
-    >
+    <p id="player-episode-title" class="mt-3.5 px-3 pb-3 font-counter text-2xl leading-tight text-screen-ink">
       {title}
     </p>
 
@@ -142,7 +141,9 @@ const hostChipClass =
     <span id="time-current">{startTime}</span> / <span id="time-duration">{formatTime(duration, { pad: true })}</span>
   </p>
 
-  <label for="seek" class="sr-only">Position de lecture</label>
+  <label for="seek" class="sr-only">
+    Position de lecture
+  </label>
   <input
     type="range"
     id="seek"
@@ -166,10 +167,12 @@ const hostChipClass =
       <svg aria-hidden="true" viewBox="0 0 25 20" class="h-5 w-auto -scale-x-100" fill="none">
         <path
           d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
         <path
           d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
         <path d="M21 0H25V20H21V0Z" fill="currentColor"></path>
       </svg>
     </button>
@@ -183,10 +186,12 @@ const hostChipClass =
       <svg aria-hidden="true" viewBox="0 0 21 20" class="h-5 w-auto -scale-x-100" fill="none">
         <path
           d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
         <path
           d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
       </svg>
     </button>
 
@@ -200,7 +205,8 @@ const hostChipClass =
         <svg aria-hidden="true" viewBox="0 0 8 16" class="h-5 w-auto" fill="none">
           <path
             d="M7.2 7.57895V6.73684H6.4V5.89474H5.6V5.05263H4.8V4.21053H4V3.36842H3.2V2.52632H2.4V1.68421H1.6V0.842105H0.8V0H0V0.842105V1.68421V2.52632V3.36842V4.21053V5.05263V5.89474V6.73684V7.57895V8.42105V9.26316V10.1053V10.9474V11.7895V12.6316V13.4737V14.3158V15.1579V16H0.8V15.1579H1.6V14.3158H2.4V13.4737H3.2V12.6316H4V11.7895H4.8V10.9474H5.6V10.1053H6.4V9.26316H7.2V8.42105H8V7.57895H7.2Z"
-            fill="currentColor"></path>
+            fill="currentColor"
+          ></path>
         </svg>
       </span>
       <span id="icon-pause" hidden class="flex">
@@ -209,7 +215,9 @@ const hostChipClass =
           <path d="M0 0V20H4.36364V0H0Z" fill="currentColor"></path>
         </svg>
       </span>
-      <span id="btn-play-pause-label" class="sr-only">Lecture</span>
+      <span id="btn-play-pause-label" class="sr-only">
+        Lecture
+      </span>
     </button>
 
     <button
@@ -221,10 +229,12 @@ const hostChipClass =
       <svg aria-hidden="true" viewBox="0 0 21 20" class="h-5 w-auto" fill="none">
         <path
           d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
         <path
           d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
       </svg>
     </button>
 
@@ -238,10 +248,12 @@ const hostChipClass =
       <svg aria-hidden="true" viewBox="0 0 25 20" class="h-5 w-auto" fill="none">
         <path
           d="M9.45 9.47368V8.42105H8.4V7.36842H7.35V6.31579H6.3V5.26316H5.25V4.21053H4.2V3.15789H3.15V2.10526H2.1V1.05263H1.05V0H0V20H1.05V18.9474H2.1V17.8947H3.15V16.8421H4.2V15.7895H5.25V14.7368H6.3V13.6842H7.35V12.6316H8.4V11.5789H9.45V10.5263H10.5V9.47368H9.45Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
         <path
           d="M19.95 9.47368V8.42105H18.9V7.36842H17.85V6.31579H16.8V5.26316H15.75V4.21053H14.7V3.15789H13.65V2.10526H12.6V1.05263H11.55V0H10.5V9.47368V10.5263V20H11.55V18.9474H12.6V17.8947H13.65V16.8421H14.7V15.7895H15.75V14.7368H16.8V13.6842H17.85V12.6316H18.9V11.5789H19.95V10.5263H21V9.47368H19.95Z"
-          fill="currentColor"></path>
+          fill="currentColor"
+        ></path>
         <path d="M21 0H25V20H21V0Z" fill="currentColor"></path>
       </svg>
     </button>

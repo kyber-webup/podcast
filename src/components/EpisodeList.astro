@@ -33,32 +33,28 @@ function episodeCode(id: string): string | undefined {
 ---
 
 <section aria-labelledby="episodes-heading" id="episode-list" class="mt-16">
-  <h2 id="episodes-heading" class={listHeadingClass}>Liste des épisodes</h2>
+  <h2 id="episodes-heading" class={listHeadingClass}>
+    Liste des épisodes
+  </h2>
 
   <ol class={listBoxClass}>
-    {
-      episodes.map((episode) => {
-        const isCurrent = episode.id === currentId;
-        const code = episodeCode(episode.id);
+    {episodes.map((episode) => {
+      const isCurrent = episode.id === currentId;
+      const code = episodeCode(episode.id);
 
-        return (
-          <li
+      return (
+        <li data-episode-id={episode.id} aria-current={isCurrent ? "true" : undefined} class={rowItemClass}>
+          <button
+            type="button"
             data-episode-id={episode.id}
-            aria-current={isCurrent ? "true" : undefined}
-            class={rowItemClass}
+            class={`episode-play-button ${rowButtonClass}`}
+            aria-label={`Écouter : ${episode.data.title}`}
           >
-            <button
-              type="button"
-              data-episode-id={episode.id}
-              class={`episode-play-button ${rowButtonClass}`}
-              aria-label={`Écouter : ${episode.data.title}`}
-            >
-              {code && <span class={rowLeadClass}>{code}</span>}
-              <span class={rowTitleClass}>{episode.data.title}</span>
-            </button>
-          </li>
-        );
-      })
-    }
+            {code && <span class={rowLeadClass}>{code}</span>}
+            <span class={rowTitleClass}>{episode.data.title}</span>
+          </button>
+        </li>
+      );
+    })}
   </ol>
 </section>

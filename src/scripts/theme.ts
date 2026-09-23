@@ -31,8 +31,7 @@ const persistTheme = (theme: Theme): void => {
   }
 };
 
-const systemTheme = (): Theme =>
-  window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+const systemTheme = (): Theme => (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 
 // Couleur de la barre du navigateur sur mobile. Les deux balises <meta> du
 // document sont conditionnées au thème du système : on les aligne toutes les
