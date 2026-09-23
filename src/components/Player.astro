@@ -1,7 +1,6 @@
 ---
 import { formatTime, toGhostTime, toSpokenTime } from "../lib/time";
 import { formatChapterLabel, type Chapter } from "../lib/chapters";
-import { seekClass } from "../lib/classes";
 
 interface Props {
   title: string;
@@ -24,14 +23,11 @@ const ghostTime = toGhostTime(startTime);
 // Le temps de l'appui, tous les boutons de transport prennent l'aspect du bouton
 // de lecture actif : aplat enfoncé en thème clair, halo interne en thème sombre.
 const transportButtonClass = [
-  "flex flex-1 items-center justify-center text-control-ink hover:cursor-pointer transition-colors hover:text-control-ink-strong",
-  "active:bg-active-bg active:text-control-ink-strong active:inset-shadow-[1px_1px_1px_0_--alpha(var(--color-black)/25%)]",
+  "flex flex-1 items-center justify-center text-control-ink cursor-pointer transition-colors hover:text-control-ink-strong",
+  "active:bg-active-bg active:text-control-ink-strong active:inset-shadow-pressed",
   "dark:active:inset-shadow-glow",
   "disabled:pointer-events-none disabled:opacity-35",
 ].join(" ");
-
-const hostChipClass =
-  "min-w-12 bg-screen-ink/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-screen-ink";
 ---
 
 <section aria-label="Lecteur">
@@ -53,7 +49,7 @@ const hostChipClass =
             data-host={host}
             data-active={hosts.includes(host) ? "true" : "false"}
             aria-hidden={hosts.includes(host) ? undefined : "true"}
-            class={hostChipClass}
+            class="min-w-12 bg-screen-ink/25 px-1 text-center text-2xs font-bold text-gray-900 uppercase data-[active=true]:bg-screen-ink"
           >
             {host}
           </li>
@@ -149,7 +145,22 @@ const hostChipClass =
     max={duration}
     step="1"
     value="0"
-    class={`mt-3 ${seekClass}`}
+    class:list={[
+      "mt-3 block h-6 w-full cursor-pointer appearance-none bg-transparent",
+      "range-track:h-1.5 range-track:rounded-xs range-track:border range-track:border-control-edge range-track:bg-track",
+      // Portion écoutée, peinte via --seek-progress (mis à jour par player.ts).
+      "range-track:bg-linear-to-r range-track:from-active range-track:to-active range-track:bg-size-[var(--seek-progress,0%)_100%] range-track:bg-no-repeat",
+      "range-thumb:h-6 range-thumb:w-3.5 range-thumb:appearance-none range-thumb:rounded-xs range-thumb:border range-thumb:border-control-edge range-thumb:bg-thumb",
+      "range-thumb:shadow-sm range-thumb:transition-shadow range-thumb:duration-300 range-thumb:ease-in-out",
+      // Halos réservés au thème sombre : discret au repos, plein au survol, au contact et au focus clavier.
+      "dark:range-thumb:shadow-glow-subtle dark:range-thumb:inset-shadow-glow-subtle",
+      "dark:range-thumb:hover:shadow-glow dark:range-thumb:hover:inset-shadow-glow",
+      "dark:range-thumb:active:shadow-glow dark:range-thumb:active:inset-shadow-glow",
+      "dark:range-thumb:focus-visible:shadow-glow dark:range-thumb:focus-visible:inset-shadow-glow",
+      // WebKit aligne le pouce sur le haut de la piste : on le remonte de la moitié
+      // de leur différence de hauteur, bordures comprises — (6 + 2 − 24 − 2) / 2.
+      "[&::-webkit-slider-thumb]:-mt-2.25",
+    ]}
     aria-valuetext={`${toSpokenTime(0)} sur ${toSpokenTime(duration)}`}
   />
 
@@ -196,7 +207,7 @@ const hostChipClass =
       type="button"
       id="btn-play-pause"
       data-state="idle"
-      class={`${transportButtonClass} not-data-[state=idle]:bg-active-bg not-data-[state=idle]:text-control-ink-strong not-data-[state=idle]:inset-shadow-[1px_1px_1px_0_--alpha(var(--color-black)/25%)] dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:inset-shadow-none dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse`}
+      class={`${transportButtonClass} not-data-[state=idle]:bg-active-bg not-data-[state=idle]:text-control-ink-strong not-data-[state=idle]:inset-shadow-pressed dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:inset-shadow-none dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse`}
     >
       <span id="icon-play" class="flex">
         <svg aria-hidden="true" viewBox="0 0 8 16" class="h-5 w-auto" fill="none">

@@ -1,13 +1,5 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import {
-  listBoxClass,
-  listHeadingClass,
-  rowButtonClass,
-  rowItemClass,
-  rowLeadClass,
-  rowTitleClass,
-} from "../lib/classes";
 
 interface Props {
   episodes: CollectionEntry<"episodes">[];
@@ -33,25 +25,34 @@ function episodeCode(id: string): string | undefined {
 ---
 
 <section aria-labelledby="episodes-heading" id="episode-list" class="mt-16">
-  <h2 id="episodes-heading" class={listHeadingClass}>
+  {/* Thème clair : bandeau noir pleine largeur (maquette 28:93). Thème sombre :
+  simple titre aligné à gauche, avec un écart avant la liste (maquette 23:2). */}
+  <h2
+    id="episodes-heading"
+    class="flex h-7.5 items-center justify-center bg-heading text-sm font-bold text-heading-ink uppercase dark:mb-3 dark:block dark:h-auto dark:text-left"
+  >
     Liste des épisodes
   </h2>
 
-  <ol class={listBoxClass}>
+  <ol class="overflow-hidden rounded-xs border border-surface-edge bg-surface dark:inset-shadow-sm">
     {episodes.map((episode) => {
       const isCurrent = episode.id === currentId;
       const code = episodeCode(episode.id);
 
       return (
-        <li data-episode-id={episode.id} aria-current={isCurrent ? "true" : undefined} class={rowItemClass}>
+        <li
+          data-episode-id={episode.id}
+          aria-current={isCurrent ? "true" : undefined}
+          class="group flex border-b border-row-edge last:border-b-0"
+        >
           <button
             type="button"
             data-episode-id={episode.id}
-            class={`episode-play-button ${rowButtonClass}`}
+            class="episode-play-button flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 text-left text-xs text-ink hover:bg-row-current/50 group-aria-[current=true]:bg-row-current group-aria-[current=true]:font-bold"
             aria-label={`Écouter : ${episode.data.title}`}
           >
-            {code && <span class={rowLeadClass}>{code}</span>}
-            <span class={rowTitleClass}>{episode.data.title}</span>
+            {code && <span class="w-12 shrink-0">{code}</span>}
+            <span class="min-w-0 flex-1 truncate">{episode.data.title}</span>
           </button>
         </li>
       );
