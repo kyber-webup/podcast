@@ -5,6 +5,9 @@
  * L'analyse n'est possible que parce que l'audio est servi depuis la même
  * origine que la page (route /audio/* du Worker) : une source cross-origin
  * sans CORS renverrait un spectre vide.
+ *
+ * Le graphe Web Audio n'analyse qu'une copie du flux : la lecture, elle, ne
+ * passe jamais par lui (voir captureAudioStream).
  */
 
 const FFT_SIZE = 2048;
@@ -35,6 +38,33 @@ export type Visualizer = {
 };
 
 type AudioContextConstructor = typeof AudioContext;
+
+/** `captureStream` n'est pas encore dans les types DOM pour les éléments média. */
+type CapturableMedia = HTMLAudioElement & {
+  captureStream?: () => MediaStream;
+  mozCaptureStream?: () => MediaStream;
+};
+
+/**
+ * Copie du flux audio de l'élément, pour l'analyser sans toucher à sa sortie.
+ *
+ * L'approche précédente (`createMediaElementSource`) faisait passer tout le son
+ * par le graphe Web Audio : quand le téléphone met l'écran en veille, le
+ * navigateur suspend ce graphe et la lecture devient muette au bout de quelques
+ * secondes. Avec une copie, l'élément continue de jouer normalement en arrière-plan
+ * et seul le vu-mètre se fige.
+ *
+ * Safari ne sait pas encore copier un flux : il n'aura pas de vu-mètre, mais la
+ * lecture, elle, fonctionne (F-70 à F-74).
+ */
+function captureAudioStream(element: HTMLAudioElement): MediaStream | undefined {
+  const media = element as CapturableMedia;
+  try {
+    return media.captureStream?.() ?? media.mozCaptureStream?.();
+  } catch {
+    return undefined;
+  }
+}
 
 function getAudioContextConstructor(): AudioContextConstructor | undefined {
   return window.AudioContext ?? (window as { webkitAudioContext?: AudioContextConstructor }).webkitAudioContext;
@@ -104,23 +134,24 @@ export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]
     }
 
     const AudioContextCtor = getAudioContextConstructor();
-    if (!AudioContextCtor) {
+    const stream = captureAudioStream(audio);
+    if (!AudioContextCtor || !stream) {
       graphFailed = true;
       return false;
     }
 
     try {
       const context = new AudioContextCtor();
-      const source = context.createMediaElementSource(audio);
+      const source = context.createMediaStreamSource(stream);
       const node = context.createAnalyser();
       node.fftSize = FFT_SIZE;
       node.smoothingTimeConstant = SMOOTHING;
       node.minDecibels = MIN_DECIBELS;
       node.maxDecibels = MAX_DECIBELS;
 
-      // Le son transite désormais par le graphe : il doit rejoindre la sortie.
+      // Analyse seulement : le son sort par l'élément <audio>, pas par le graphe.
+      // Rien n'est donc branché sur context.destination.
       source.connect(node);
-      node.connect(context.destination);
       void context.resume();
 
       analyser = node;
