@@ -70,6 +70,8 @@ Si la fiche référence un fichier absent de R2 (oubli à l'étape 1, faute de f
 
 ### Déploiement manuel
 
+> **Le fichier `.env.development`** (non versionné) contient `PUBLIC_AUDIO_BASE=/dev-audio` pour écouter un MP3 local pendant le développement. Il ne s'applique **qu'au serveur de dev** : un `npm run build` produit toujours des adresses `/audio/…` servies par R2. Le script `postbuild` retire en plus `dev-audio/` du dossier publié, pour qu'aucun fichier audio ne parte en ligne.
+
 ```bash
 npm run build
 npx wrangler deploy
