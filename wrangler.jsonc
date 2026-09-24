@@ -4,7 +4,11 @@
   "compatibility_date": "2026-09-16",
   "main": "worker/index.ts",
   // NF-51 : aucune autre voie d'accès que le domaine personnalisé.
-  "workers_dev": false,
+  // ⚠️ TEMPORAIRE (accepté par Simon le 24/09/2026) : workers.dev est activé pour
+  // pouvoir tester en ligne en attendant devnote.agence-webup.com. Cette adresse
+  // ne peut pas être protégée par Access : la page et les MP3 sont publics pour
+  // qui connaît l'URL. À REMETTRE À false en même temps qu'on active `routes`.
+  "workers_dev": true,
   "preview_urls": false,
   "assets": {
     "directory": "./dist",

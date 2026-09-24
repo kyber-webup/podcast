@@ -1,6 +1,6 @@
 ---
-title: "L'accessibilité et se senjeux"
-date: 2026-09-10
+title: "L'accessibilité et ses senjeux"
+date: 2026-09-01
 duration: "15:00"
 file: "003-refactor-sans-tout-casser.mp3"
 description: "Une méthode simple pour refactorer en confiance, avec ou sans tests."
