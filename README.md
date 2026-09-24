@@ -66,6 +66,62 @@ Aucune connaissance technique n'est nécessaire pour publier un épisode — seu
 
 Si la fiche référence un fichier absent de R2 (oubli à l'étape 1, faute de frappe dans `file`), le site ne plantera pas : le lecteur affichera le message d'erreur habituel (« La lecture a échoué », avec un bouton Réessayer) au moment de la lecture.
 
+## Mise en ligne
+
+### Déploiement manuel
+
+```bash
+npm run build
+npx wrangler deploy
+```
+
+`wrangler deploy` envoie le contenu de `dist/` (les pages) et le Worker (la route `/audio/*`). Les fichiers audio, eux, vivent dans R2 et ne sont jamais renvoyés par le déploiement.
+
+**Tant que le sous-domaine `devnote.agence-webup.com` n'existe pas, le site déployé n'est joignable par aucune adresse.** C'est voulu : `workers_dev` est désactivé dans `wrangler.jsonc` pour qu'il n'existe aucune porte d'entrée autre que le domaine de l'agence (NF-51). Le déploiement reste utile — il valide la chaîne complète et le site sera en ligne dès que le sous-domaine sera branché.
+
+### Brancher le sous-domaine
+
+Une fois `devnote.agence-webup.com` créé par le sysadmin sur la zone Cloudflare de l'agence :
+
+1. Décommenter le bloc `routes` dans `wrangler.jsonc` (il est déjà écrit, avec un TODO).
+2. Relancer `npx wrangler deploy`.
+3. Ouvrir `https://devnote.agence-webup.com` : le site doit répondre.
+
 ### Déploiement automatique (E-03)
 
-Ce dépôt doit être connecté à Cloudflare pour que chaque `git push` sur la branche principale déclenche automatiquement un build et une mise en ligne (tableau de bord Cloudflare → Workers & Pages → connecter le dépôt GitHub, build command `npm run build`, dossier de sortie `dist`). C'est une configuration à faire une seule fois, par Simon, dans le tableau de bord Cloudflare — elle n'est pas encore en place à ce stade du projet.
+Pour que chaque `git push` sur la branche principale mette le site à jour tout seul :
+
+1. Créer un dépôt GitHub et y pousser le projet.
+2. Tableau de bord Cloudflare → **Workers & Pages** → **Create** → onglet **Workers** → **Connect to Git**, choisir le dépôt.
+3. Commande de build : `npm run build`. Rien d'autre à changer : `wrangler.jsonc` décrit déjà le Worker, les fichiers statiques et le bucket R2.
+4. Vérifier qu'un push déclenche bien un déploiement (onglet **Deployments**).
+
+À faire une seule fois, par Simon, dans le tableau de bord — ce n'est pas automatisable depuis le projet.
+
+## Configuration Cloudflare Access
+
+Le site n'a pas de compte utilisateur : c'est Cloudflare Access qui filtre à l'entrée. Configuration à faire une seule fois par Simon, dans le tableau de bord Cloudflare (§9 de la spec), une fois le sous-domaine en place.
+
+1. **Zero Trust → Settings → Authentication** : activer au minimum **One-time PIN** (code à usage unique envoyé par e-mail). Le fournisseur d'identité de l'agence (Google Workspace, Microsoft Entra) peut être ajouté plus tard.
+2. **Access → Applications → Add an application → Self-hosted** : nom « DevNote », domaine `devnote.agence-webup.com`, chemin vide (tout le site, audio compris).
+3. **Politique Allow** : règle « Emails ending in » → `@agence-webup.com`, plus les autres domaines du groupe si nécessaire.
+4. **Durée de session : 1 mois**, pour ne pas avoir à se reconnecter à chaque écoute.
+5. Vérifier **en navigation privée** : la page de connexion doit apparaître, puis `/` **et** un fichier `/audio/...` doivent être accessibles.
+6. Vérifier que l'URL `*.workers.dev` ne répond pas (NF-51).
+7. Noter l'**AUD** de l'application (Access → l'application → Overview) et le **domaine d'équipe** (`<équipe>.cloudflareaccess.com`).
+
+### Activer la vérification côté Worker (NF-54)
+
+Access bloque déjà les requêtes en amont. Le Worker sait en plus vérifier lui-même le jeton signé, ce qui protège la route `/audio/*` si la politique Access était un jour mal configurée. Une fois l'AUD et le domaine d'équipe notés, remplir dans `wrangler.jsonc` :
+
+```jsonc
+"vars": {
+  "ENFORCE_ACCESS": "true",
+  "ACCESS_TEAM_DOMAIN": "<équipe>.cloudflareaccess.com",
+  "ACCESS_AUD": "<l'AUD de l'application>",
+}
+```
+
+puis redéployer. Ces trois valeurs ne sont pas des secrets (l'AUD est un identifiant public), elles peuvent rester dans le fichier de configuration.
+
+À laisser sur `"false"` en développement : sans jeton Access, le Worker refuserait toutes les requêtes audio en local.
