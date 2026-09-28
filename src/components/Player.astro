@@ -98,8 +98,10 @@ const startTime = formatTime(0, { pad: true });
 
     <TransportButton
       id="play-pause-button"
-      data-state="idle"
-      class="not-data-[state=idle]:bg-active-bg not-data-[state=idle]:text-control-ink-strong not-data-[state=idle]:inset-shadow-pressed dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:inset-shadow-none dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse"
+      data-state="idle" /* Thème clair : le bouton n'est enfoncé que pendant la lecture, il revient
+      à l'aspect neutre en pause. Thème sombre : le halo reste tant qu'un épisode
+      est en cours, fixe en lecture et respirant en pause. */
+      class="data-[state=playing]:bg-active-bg data-[state=playing]:text-control-ink-strong data-[state=playing]:inset-shadow-pressed dark:border-2 dark:border-transparent dark:not-data-[state=idle]:border-active dark:not-data-[state=idle]:bg-active-bg dark:not-data-[state=idle]:text-control-ink-strong dark:data-[state=playing]:inset-shadow-glow dark:data-[state=paused]:animate-glow-pulse"
     >
       <span id="play-icon" class="flex">
         <svg aria-hidden="true" viewBox="0 0 8 16" class="h-5 w-auto" fill="none">

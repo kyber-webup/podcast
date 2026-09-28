@@ -59,6 +59,9 @@ const waveformBarPositions = Array.from({ length: WAVEFORM_BAR_COUNT }, (_, inde
   {/* Vu-mètre : barres collées au bas de l'écran, animées pendant la lecture
   par src/scripts/visualizer.ts. Au repos (y2 = y1) elles sont de hauteur nulle,
   donc invisibles. Couleur via currentColor, halo via drop-shadow-glow.
+  Les barres sont pointillées (stroke-dasharray) pour donner des segments
+  empilés, comme les diodes d'un vu-mètre : le motif part du bas (y1), donc
+  tous les segments sont alignés d'une barre à l'autre.
   En grande largeur, une barre sur deux est masquée : les restantes sont bien
   plus larges et restent régulièrement espacées. Les barres extrêmes sont posées
   à une demi-épaisseur maximale des bords du viewBox, pour affleurer exactement
@@ -68,7 +71,7 @@ const waveformBarPositions = Array.from({ length: WAVEFORM_BAR_COUNT }, (_, inde
     aria-hidden="true"
     viewBox="0 0 334 37"
     preserveAspectRatio="none"
-    class="mt-auto block h-9.25 w-full px-1.5 text-screen-ink drop-shadow-glow stroke-4 sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
+    class="mt-auto block h-9.25 w-full px-1.5 text-screen-ink drop-shadow-glow stroke-4 [stroke-dasharray:2.4_1.6] sm:px-3 sm:stroke-18 sm:[&>line:nth-child(even)]:hidden"
     fill="none"
   >
     {waveformBarPositions.map((x) => (
