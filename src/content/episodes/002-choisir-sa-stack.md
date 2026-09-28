@@ -1,6 +1,6 @@
 ---
 title: "L'IA dans le quotidien des développeurs"
-date: 2026-08-20
+date: 2026-09-12
 duration: "18:32"
 file: "002-choisir-sa-stack.mp3"
 description: "Les critères qui comptent vraiment avant de choisir un framework."

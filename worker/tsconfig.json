@@ -9,5 +9,5 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["**/*.ts", "../worker-configuration.d.ts"]
+  "include": ["**/*.ts", "../server/**/*.ts", "../functions/**/*.ts", "../worker-configuration.d.ts"]
 }

@@ -1,8 +1,9 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  // worker/ a son propre tsconfig.json : les types globaux du runtime Workers
-  // (Request, Response, ReadableStream, HTMLRewriter...) entrent en collision
-  // avec les types DOM utilisés par le code du navigateur (src/).
-  "exclude": ["dist", "worker", "worker-configuration.d.ts"]
+  // Le code serveur (server/, functions/, worker/) a son propre tsconfig, dans
+  // worker/ : les types globaux du runtime Cloudflare (Request, Response,
+  // ReadableStream, HTMLRewriter...) entrent en collision avec les types DOM
+  // utilisés par le code du navigateur (src/).
+  "exclude": ["dist", "worker", "server", "functions", "worker-configuration.d.ts"]
 }

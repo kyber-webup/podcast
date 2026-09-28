@@ -6,7 +6,7 @@ Lecteur de podcasts pour la diffusion en interne de DevNote
 
 - [Astro](https://astro.build) (site statique), TypeScript strict.
 - [Tailwind CSS](https://tailwindcss.com) v4 (plugin Vite `@tailwindcss/vite`) compilé au build, aucune ressource chargée en CDN.
-- Cloudflare Workers (static assets + route `/audio/*`), Cloudflare R2 pour le stockage audio, Cloudflare Access pour l'authentification.
+- Cloudflare Pages (pages statiques + fonction `/audio/*`), Cloudflare R2 pour le stockage audio.
 - [Vitest](https://vitest.dev).
 
 ## Commandes
@@ -19,22 +19,22 @@ Lecteur de podcasts pour la diffusion en interne de DevNote
 | `npm run preview`      | Prévisualise le build en local                       |
 | `npm run test`         | Lance les tests Vitest                                |
 | `npx astro check`      | Vérifie les types TypeScript (site)                   |
-| `npm run check:worker` | Vérifie les types TypeScript du Worker (`worker/`)    |
-| `npx wrangler dev`     | Sert le build + la route `/audio/*` en local (après `npm run build`) |
+| `npm run check:worker` | Vérifie les types TypeScript du code serveur (`server/`, `functions/`, `worker/`) |
+| `npx wrangler pages dev dist --r2=AUDIO` | Sert le build + la route `/audio/*` en local (après `npm run build`) |
 
-## Route audio en local (Worker + R2)
+## Route audio en local (fonction Pages + R2)
 
-Le Worker (`worker/index.ts`) sert `/audio/<fichier>.mp3` depuis R2 ; toutes les autres routes sont servies par les fichiers statiques de `dist/`. `wrangler dev` simule R2 en local (aucune donnée réelle) :
+En développement courant (`npm run dev`), le lecteur lit un MP3 posé dans `public/dev-audio/` : voir `.env.development`. Pour tester la vraie route `/audio/<fichier>.mp3`, celle qui lit R2 :
 
 ```bash
 npm run build
-npx wrangler r2 object put podcast-audio-preview/<fichier>.mp3 --file <chemin-local> --content-type audio/mpeg --local
-npx wrangler dev
+npx wrangler r2 object put podcast-audio/<fichier>.mp3 --file <chemin-local> --content-type audio/mpeg --local
+npx wrangler pages dev dist --r2=AUDIO
 ```
 
-(`podcast-audio-preview` est le bucket utilisé par `wrangler dev` en local, voir `preview_bucket_name` dans `wrangler.jsonc` — le vrai bucket `podcast-audio` n'est utilisé qu'en production.)
+`--r2=AUDIO` crée un bucket simulé en local (vide au départ, d'où l'envoi du fichier à la ligne précédente). Sans `--local`, l'envoi se fait sur le vrai bucket.
 
-Tests manuels (à refaire après toute modification de `worker/index.ts`) :
+Tests manuels (à refaire après toute modification de `server/audio.ts`) :
 
 ```bash
 curl -I  http://localhost:8787/audio/<fichier>.mp3                          # 200 + Accept-Ranges
@@ -68,51 +68,50 @@ Si la fiche référence un fichier absent de R2 (oubli à l'étape 1, faute de f
 
 ## Mise en ligne
 
-### Déploiement manuel
+Le site est déployé sur **Cloudflare Pages**, projet connecté au dépôt GitHub : chaque `git push` sur `main` déclenche un build et une mise en ligne (E-03).
 
-> **Le fichier `.env.development`** (non versionné) contient `PUBLIC_AUDIO_BASE=/dev-audio` pour écouter un MP3 local pendant le développement. Il ne s'applique **qu'au serveur de dev** : un `npm run build` produit toujours des adresses `/audio/…` servies par R2. Le script `postbuild` retire en plus `dev-audio/` du dossier publié, pour qu'aucun fichier audio ne parte en ligne.
+| Réglage du projet Pages | Valeur |
+| --- | --- |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Liaison R2 (Settings → Bindings) | nom de variable `AUDIO` → bucket `podcast-audio` |
 
-```bash
-npm run build
-npx wrangler deploy
-```
+La liaison R2 est **indispensable** : sans elle, `/audio/<fichier>.mp3` renvoie une erreur et la lecture échoue. Pages ne lit pas `wrangler.jsonc` pour les liaisons, elles se déclarent dans le tableau de bord.
 
-`wrangler deploy` envoie le contenu de `dist/` (les pages) et le Worker (la route `/audio/*`). Les fichiers audio, eux, vivent dans R2 et ne sont jamais renvoyés par le déploiement.
+### Qui sert quoi
 
-**Tant que le sous-domaine `devnote.agence-webup.com` n'existe pas, le site déployé n'est joignable par aucune adresse.** C'est voulu : `workers_dev` est désactivé dans `wrangler.jsonc` pour qu'il n'existe aucune porte d'entrée autre que le domaine de l'agence (NF-51). Le déploiement reste utile — il valide la chaîne complète et le site sera en ligne dès que le sous-domaine sera branché.
+- Les pages viennent de `dist/`, produit par Astro.
+- `/audio/<fichier>.mp3` est servi par la fonction `functions/audio/[name].ts`, qui lit le fichier dans R2 et gère la lecture par morceaux (le déplacement dans la barre de progression en dépend).
+- La logique de cette route vit dans `server/audio.ts`, partagée avec `worker/index.ts`.
 
-### Brancher le sous-domaine
+### Domaine personnalisé
 
-Une fois `devnote.agence-webup.com` créé par le sysadmin sur la zone Cloudflare de l'agence :
+Pages accepte un sous-domaine dont le DNS reste chez l'hébergeur actuel : projet → **Custom domains** → *Set up a domain* → saisir `devnote.agence-webup.com`, puis créer chez l'hébergeur un enregistrement CNAME vers `<projet>.pages.dev`. Il faut passer par le tableau de bord **avant** de créer le CNAME, sinon le domaine renvoie une erreur 522. Un domaine racine (sans sous-domaine) exigerait, lui, que la zone soit gérée par Cloudflare.
 
-1. Décommenter le bloc `routes` dans `wrangler.jsonc` (il est déjà écrit, avec un TODO).
-2. Relancer `npx wrangler deploy`.
-3. Ouvrir `https://devnote.agence-webup.com` : le site doit répondre.
+### Et si le domaine passe un jour sur Cloudflare
 
-### Déploiement automatique (E-03)
+L'architecture Workers reste prête : `worker/index.ts` et `wrangler.workers.jsonc`, déployables par `npx wrangler deploy -c wrangler.workers.jsonc`. C'est le seul chemin qui permet d'utiliser Cloudflare Access (voir ci-dessous).
 
-Pour que chaque `git push` sur la branche principale mette le site à jour tout seul :
+## Authentification : état actuel
 
-1. Créer un dépôt GitHub et y pousser le projet.
-2. Tableau de bord Cloudflare → **Workers & Pages** → **Create** → onglet **Workers** → **Connect to Git**, choisir le dépôt.
-3. Commande de build : `npm run build`. Rien d'autre à changer : `wrangler.jsonc` décrit déjà le Worker, les fichiers statiques et le bucket R2.
-4. Vérifier qu'un push déclenche bien un déploiement (onglet **Deployments**).
+⚠️ **Le site n'est pas protégé aujourd'hui.** Cloudflare Access, prévu par le cahier des charges (§9, NF-50 à NF-54), exige que le nom d'hôte appartienne à une zone Cloudflare active du compte. Le domaine de l'agence étant géré ailleurs, Access ne peut pas s'appliquer :
 
-À faire une seule fois, par Simon, dans le tableau de bord — ce n'est pas automatisable depuis le projet.
+- garder le DNS dehors et passer par une zone « partielle » (CNAME) demande un plan **Business** ;
+- déléguer seulement `devnote.agence-webup.com` comme zone séparée demande un plan **Enterprise** ;
+- la seule voie gratuite est de confier la zone `agence-webup.com` à Cloudflare (changement de nameservers), ce qui ramènerait aussi au déploiement Worker.
 
-## Configuration Cloudflare Access
+Tant que ce n'est pas tranché, toute personne connaissant l'URL peut écouter les épisodes. À décider : basculer le DNS, ou mettre en place une protection maison (mot de passe partagé vérifié par la fonction audio).
 
-Le site n'a pas de compte utilisateur : c'est Cloudflare Access qui filtre à l'entrée. Configuration à faire une seule fois par Simon, dans le tableau de bord Cloudflare (§9 de la spec), une fois le sous-domaine en place.
+### Si la zone arrive un jour sur Cloudflare
 
-1. **Zero Trust → Settings → Authentication** : activer au minimum **One-time PIN** (code à usage unique envoyé par e-mail). Le fournisseur d'identité de l'agence (Google Workspace, Microsoft Entra) peut être ajouté plus tard.
+1. **Zero Trust → Settings → Authentication** : activer au minimum **One-time PIN** (code à usage unique par e-mail).
 2. **Access → Applications → Add an application → Self-hosted** : nom « DevNote », domaine `devnote.agence-webup.com`, chemin vide (tout le site, audio compris).
 3. **Politique Allow** : règle « Emails ending in » → `@agence-webup.com`, plus les autres domaines du groupe si nécessaire.
 4. **Durée de session : 1 mois**, pour ne pas avoir à se reconnecter à chaque écoute.
 5. Vérifier **en navigation privée** : la page de connexion doit apparaître, puis `/` **et** un fichier `/audio/...` doivent être accessibles.
-6. Vérifier que l'URL `*.workers.dev` ne répond pas (NF-51).
-7. Noter l'**AUD** de l'application (Access → l'application → Overview) et le **domaine d'équipe** (`<équipe>.cloudflareaccess.com`).
+6. Noter l'**AUD** de l'application et le **domaine d'équipe** (`<équipe>.cloudflareaccess.com`).
 
-### Activer la vérification côté Worker (NF-54)
+### Activer la vérification du jeton (NF-54)
 
 Access bloque déjà les requêtes en amont. Le Worker sait en plus vérifier lui-même le jeton signé, ce qui protège la route `/audio/*` si la politique Access était un jour mal configurée. Une fois l'AUD et le domaine d'équipe notés, remplir dans `wrangler.jsonc` :
 
@@ -124,6 +123,6 @@ Access bloque déjà les requêtes en amont. Le Worker sait en plus vérifier lu
 }
 ```
 
-puis redéployer. Ces trois valeurs ne sont pas des secrets (l'AUD est un identifiant public), elles peuvent rester dans le fichier de configuration.
+puis redéployer (sur Pages, ces valeurs se saisissent dans Settings → Variables). Ces trois valeurs ne sont pas des secrets (l'AUD est un identifiant public), elles peuvent rester dans le fichier de configuration.
 
 À laisser sur `"false"` en développement : sans jeton Access, le Worker refuserait toutes les requêtes audio en local.
