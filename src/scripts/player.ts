@@ -74,14 +74,30 @@ function initPlayer(): void {
     pauseIcon.hidden = state !== "playing";
   };
 
-  const updateTimeDisplay = (position: number): void => {
+  /**
+   * Minuteur de l'écran : il montre toujours ce qui sort des haut-parleurs.
+   * Pendant un déplacement du curseur, il continue donc d'avancer avec la
+   * lecture, alors que le minuteur sous le curseur affiche, lui, la position
+   * visée (voir updateSeekDisplay).
+   */
+  const updateScreenTime = (position: number): void => {
     const formatted = formatTime(position, { pad: true });
-    elapsedTime.textContent = formatted;
     screenTime.textContent = formatted;
     screenTimeGhost.textContent = toGhostTime(formatted);
+  };
+
+  /** Minuteur sous le curseur, position du curseur et progression peinte. */
+  const updateSeekDisplay = (position: number): void => {
+    elapsedTime.textContent = formatTime(position, { pad: true });
     seekBar.setAttribute("aria-valuetext", `${toSpokenTime(position)} sur ${toSpokenTime(duration)}`);
     const percent = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
     seekBar.style.setProperty("--seek-progress", `${percent}%`);
+  };
+
+  /** Les deux minuteurs à la fois : chargement, saut de chapitre, fin d'épisode. */
+  const updateTimeDisplay = (position: number): void => {
+    updateScreenTime(position);
+    updateSeekDisplay(position);
   };
 
   const clampToDuration = (seconds: number): number => {
@@ -291,12 +307,19 @@ function initPlayer(): void {
   });
 
   audio.addEventListener("timeupdate", () => {
-    if (isSeeking || !currentEpisode) {
+    if (!currentEpisode) {
+      return;
+    }
+    // L'écran et la ligne de chapitre suivent la lecture même pendant un
+    // déplacement du curseur : le son, lui, ne s'est pas interrompu.
+    updateScreenTime(audio.currentTime);
+    setActiveChapter(currentEpisode.chapters, getCurrentChapterIndex(currentEpisode.chapters, audio.currentTime));
+
+    if (isSeeking) {
       return;
     }
     seekBar.value = String(Math.round(audio.currentTime));
-    updateTimeDisplay(audio.currentTime);
-    setActiveChapter(currentEpisode.chapters, getCurrentChapterIndex(currentEpisode.chapters, audio.currentTime));
+    updateSeekDisplay(audio.currentTime);
     if (!audio.paused) {
       savePosition(audio.currentTime); // F-43, throttlé
     }
@@ -345,7 +368,7 @@ function initPlayer(): void {
 
   seekBar.addEventListener("input", () => {
     isSeeking = true;
-    updateTimeDisplay(Number(seekBar.value));
+    updateSeekDisplay(Number(seekBar.value)); // l'écran continue de suivre la lecture
   });
 
   seekBar.addEventListener("change", () => {
