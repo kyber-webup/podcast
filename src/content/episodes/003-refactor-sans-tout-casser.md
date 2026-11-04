@@ -1,5 +1,5 @@
 ---
-title: "L'accessibilité et ses senjeux"
+title: "L'accessibilité et ses enjeux"
 date: 2026-09-01
 duration: "15:00"
 file: "003-refactor-sans-tout-casser.mp3"
