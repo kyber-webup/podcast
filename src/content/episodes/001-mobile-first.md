@@ -1,7 +1,7 @@
 ---
 title: "Responsive vs mobile first"
 date: 2026-09-14
-duration: "22:12"
+duration: "22:30"
 file: "001-mobile-first.mp3"
 description: "Pourquoi le mobile first reste mal compris en e-commerce."
 hosts: ["Elia", "Simon"]
