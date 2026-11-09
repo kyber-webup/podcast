@@ -16,11 +16,15 @@ const SMOOTHING = 0.75;
 // du vu-mètre). Une plage plus large déportait toute l'activité sur les barres
 // de gauche, là où une voix concentre son énergie.
 const MIN_FREQUENCY_HZ = 70;
-const MAX_FREQUENCY_HZ = 800;
-// Fenêtre de niveaux resserrée par rapport aux valeurs par défaut (-100/-30 dB),
-// qui écrasent la dynamique d'une voix parlée.
-const MIN_DECIBELS = -80;
-const MAX_DECIBELS = -32;
+const MAX_FREQUENCY_HZ = 600;
+// Fenêtre de niveaux calibrée sur l'épisode 002 (mixage de référence, proche de
+// -16 LUFS), mesurée sur 20 s de parole : médiane des bandes -48,8 dB, p90 -40,8,
+// p99 -36,3. Résultat visé et vérifié : barres à ~40 % en parole courante, 87 %
+// au p90, plafond atteint environ 4 % du temps. Un mixage nettement plus bas
+// (l'épisode 001) restera donc près du plancher : c'est voulu, le vu-mètre
+// montre le niveau réel.
+const MIN_DECIBELS = -58;
+const MAX_DECIBELS = -35;
 const MIN_BAR_HEIGHT = 1; // plancher pendant la lecture
 // À la pause, les barres se figent puis retombent, comme l'aiguille d'un vu-mètre
 // physique, au lieu de disparaître d'un coup.
@@ -28,9 +32,10 @@ const RELEASE_MS = 500;
 const MAX_BAR_HEIGHT = 34; // base du vu-mètre à y = 37 (viewBox)
 // Pondération par barre : léger rattrapage vers les aigus (la voix y perd de
 // l'énergie) et cloche centrée, pour un pic visuel au milieu du vu-mètre.
-const HIGH_FREQUENCY_TILT = 1;
-const EDGE_GAIN = 0.75;
-const MID_GAIN_BOOST = 0.5;
+// Valeurs réduites avec la nouvelle fenêtre : au-delà, les barres saturent.
+const HIGH_FREQUENCY_TILT = 0.45;
+const EDGE_GAIN = 0.8;
+const MID_GAIN_BOOST = 0.15;
 
 export type Visualizer = {
   start: () => void;
@@ -109,7 +114,11 @@ export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]
   const gains = buildGains(bars.length);
   const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
+  let context: AudioContext | undefined;
   let analyser: AnalyserNode | undefined;
+  let source: MediaStreamAudioSourceNode | undefined;
+  /** Vrai tant que le flux du fichier en cours n'a pas été capté. */
+  let needsSource = true;
   let spectrum: Uint8Array<ArrayBuffer> | undefined;
   let ranges: Array<[number, number]> = [];
   let frameId = 0;
@@ -126,43 +135,58 @@ export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]
    * abandonne définitivement le vu-mètre : la lecture, elle, n'est pas affectée.
    */
   const ensureGraph = (): boolean => {
-    if (analyser) {
-      return true;
-    }
     if (graphFailed) {
       return false;
     }
 
     const AudioContextCtor = getAudioContextConstructor();
-    const stream = captureAudioStream(audio);
-    if (!AudioContextCtor || !stream) {
+    if (!AudioContextCtor) {
       graphFailed = true;
       return false;
     }
 
     try {
-      const context = new AudioContextCtor();
-      const source = context.createMediaStreamSource(stream);
-      const node = context.createAnalyser();
-      node.fftSize = FFT_SIZE;
-      node.smoothingTimeConstant = SMOOTHING;
-      node.minDecibels = MIN_DECIBELS;
-      node.maxDecibels = MAX_DECIBELS;
+      if (!context || !analyser) {
+        context = new AudioContextCtor();
+        const node = context.createAnalyser();
+        node.fftSize = FFT_SIZE;
+        node.smoothingTimeConstant = SMOOTHING;
+        node.minDecibels = MIN_DECIBELS;
+        node.maxDecibels = MAX_DECIBELS;
+        analyser = node;
+        spectrum = new Uint8Array(new ArrayBuffer(node.frequencyBinCount));
+        ranges = buildBinRanges(bars.length, node.frequencyBinCount, context.sampleRate);
+      }
 
-      // Analyse seulement : le son sort par l'élément <audio>, pas par le graphe.
-      // Rien n'est donc branché sur context.destination.
-      source.connect(node);
+      // Une copie de flux ne vaut que pour le fichier en cours : au changement
+      // d'épisode, sa piste se termine et l'analyseur ne reçoit plus rien. On la
+      // reprend donc à chaque nouvelle source (voir l'écouteur "loadstart").
+      if (needsSource) {
+        const stream = captureAudioStream(audio);
+        if (!stream) {
+          graphFailed = true;
+          return false;
+        }
+        source?.disconnect();
+        source = context.createMediaStreamSource(stream);
+        // Analyse seulement : le son sort par l'élément <audio>, pas par le
+        // graphe. Rien n'est donc branché sur context.destination.
+        source.connect(analyser);
+        needsSource = false;
+      }
+
       void context.resume();
-
-      analyser = node;
-      spectrum = new Uint8Array(new ArrayBuffer(node.frequencyBinCount));
-      ranges = buildBinRanges(bars.length, node.frequencyBinCount, context.sampleRate);
       return true;
     } catch {
       graphFailed = true;
       return false;
     }
   };
+
+  // Nouveau fichier chargé dans l'élément : la copie de flux précédente est morte.
+  audio.addEventListener("loadstart", () => {
+    needsSource = true;
+  });
 
   /** Retombée des barres après la pause : de leur hauteur figée jusqu'à zéro. */
   const release = (from: number[], startedAt: number): void => {
@@ -199,7 +223,7 @@ export function createVisualizer(audio: HTMLAudioElement, bars: SVGLineElement[]
       }
       const average = total / Math.max(1, end - start);
       const mixed = peak * 0.75 + average * 0.25;
-      const level = Math.min(1, (mixed / 255) * gains[index]) ** 0.85;
+      const level = Math.min(1, (mixed / 255) * gains[index]);
       return MIN_BAR_HEIGHT + level * (MAX_BAR_HEIGHT - MIN_BAR_HEIGHT);
     });
 
